@@ -197,3 +197,34 @@ token*.json
 .gitignore.base
 README_GITHUB_UPLOAD_BASE.md
 LT_HCNS_GITHUB_BASE_UPLOAD_FILES.zip
+
+# LT-HCNS SAFE IGNORE BLOCK
+.clasprc.json
+.firebase/
+.gitconfig
+.git_old*/
+GITHUB_*.bat
+.gitignore.base
+README_GITHUB_UPLOAD_BASE.md
+LT_HCNS_GITHUB_BASE_UPLOAD_FILES.zip
+*.local
+.env
+.env.*
+token.json
+credentials.json
+client_secret*.json
+service-account*.json
+*service_account*.json
+*.pem
+*.key
+*.p12
+node_modules/
+dist/
+build/
+.cache/
+.next/
+out/
+.DS_Store
+Thumbs.db
+*.log
+# END LT-HCNS SAFE IGNORE BLOCK

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --line: #e5e7eb;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --ok-bg: #ecfdf3;
+      --ok-fg: #166534;
+      --bad-bg: #fef2f2;
+      --bad-fg: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 22px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Tahoma;
+    }
+
+    html,
+    body {
+      height: auto;
+      overflow-y: auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .status {
+      margin-bottom: 16px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 14px;
+    }
+
+    .status.error {
+      border-color: #fecaca;
+      background: var(--bad-bg);
+      color: var(--bad-fg);
+    }
+
+    .loading-more {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .loading-more.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      box-shadow: 0 10px 24px rgba(2, 8, 23, 0.08);
+      overflow: hidden;
+    }
+
+    .card-body {
+      padding: 14px;
+    }
+
+    .img-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #eef2ff;
+      display: none;
+    }
+
+    .img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #eef2ff;
+      display: block;
+    }
+
+    .name {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .code {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .badge {
+      margin-top: 10px;
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.active {
+      background: var(--ok-bg);
+      color: var(--ok-fg);
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge.inactive {
+      background: var(--bad-bg);
+      color: var(--bad-fg);
+      border: 1px solid #fecaca;
+    }
+
+    .meta {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      gap: 2px;
+    }
+
+    .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--muted);
+    }
+
+    .value {
+      font-size: 14px;
+      font-weight: 600;
+      word-break: break-word;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1 class="title">🏢 Chi tiết bộ phận</h1>
+    <div class="pill" id="departmentName">Bộ phận:
+      <?= departmentName ?>
+    </div>
+  </div>
+
+  <div id="statusBox" class="status">Đang tải dữ liệu nhân sự...</div>
+  <div id="loadingMore" class="loading-more hidden">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Đang tải thêm nhân sự...</span>
+  </div>
+  <div id="grid" class="grid"></div>
+  <div id="loadMoreTrigger" style="height: 20px;"></div>
+
+  <script>
+    const DEPARTMENT = '<?= departmentName ?>';
+    const PAGE_SIZE = 4;
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalEmployees = 0;
+    let loading = false;
+    let hasMore = true;
+    let observer;
+
+    // Hàm phụ trợ để thoát ký tự đặc biệt trong chuỗi và tránh lỗi XSS, 
+    // được sử dụng trong quá trình tạo HTML động cho thẻ nhân viên để đảm bảo an toàn khi
+    function esc(value) {
+      const span = document.createElement('span');
+      span.textContent = value == null || value === '' ? '-' : String(value);
+      return span.innerHTML;
+    }
+
+    // Hàm phụ trợ để xác định xem trạng thái nhân viên có được coi là "active" hay không, 
+    // dựa trên việc kiểm tra chuỗi trạng thái có chứa các từ khóa liên quan đến hoạt động
+    function isActive(statusText) {
+      const normalized = (statusText || '').toString().trim().toLowerCase();
+      return (
+        normalized.includes('active') ||
+        normalized.includes('đang làm') ||
+        normalized.includes('làm việc') ||
+        normalized.includes('hoạt động')
+      );
+    }
+
+    // Hàm phụ trợ để tạo HTML cho thẻ nhân viên dựa trên dữ liệu nhân viên, 
+    // được gọi trong quá trình hiển thị danh sách nhân sự để tạo giao diện cho từng nhân viên.
+    function renderEmployeeCard(emp) {
+      const active = isActive(emp.status);
+      const imageHtml = emp.imageUrl
+        ? `<div class="img-wrap" style="display:block;"><img src="${esc(emp.imageUrl)}" alt="${esc(emp.name)}"></div>`
+        : '';
+
+      return `
+          <article class="card">
+            ${imageHtml}
+            <div class="card-body">
+              <h3 class="name">${esc(emp.name)}</h3>
+              <div class="code">Mã: ${esc(emp.code)}</div>
+              <span class="badge ${active ? 'active' : 'inactive'}">${esc(emp.status || '-')}</span>
+
+              <div class="meta">
+                <div class="row"><span class="label">Giới tính</span><span class="value">${esc(emp.gender)}</span></div>
+                <div class="row"><span class="label">Bộ phận</span><span class="value">${esc(emp.department)}</span></div>
+                <div class="row"><span class="label">SĐT</span><span class="value">${esc(emp.phone)}</span></div>
+                <div class="row"><span class="label">Email</span><span class="value">${esc(emp.email)}</span></div>
+                <div class="row"><span class="label">Ngày vào làm</span><span class="value">${esc(emp.startDate)}</span></div>
+              </div>
+            </div>
+          </article>
+        `;
+    }
+
+    // Hàm phụ trợ để cập nhật trạng thái hiển thị cho người dùng, bao gồm cả thông báo lỗi, 
+    // được gọi trong quá trình tải dữ liệu để cung cấp phản hồi trực quan về trạng thái hiện tại
+    function setStatus(message, isError) {
+      const box = document.getElementById('statusBox');
+      box.textContent = message;
+      box.className = `status${isError ? ' error' : ''}`;
+    }
+
+    // Hàm phụ trợ để lấy phần tử spinner loading, tạo mới nếu chưa tồn tại, 
+    // và đảm bảo chỉ có một phần tử spinner duy nhất trong DOM.
+    function getSpinnerElement() {
+      const existing = document.getElementById('spinner');
+      if (existing) return existing;
+
+      const fallback = document.getElementById('loadingMore');
+      if (fallback) {
+        fallback.id = 'spinner';
+        return fallback;
+      }
+
+      const spinner = document.createElement('div');
+      spinner.id = 'spinner';
+      spinner.className = 'loading-more hidden';
+      spinner.textContent = 'Đang tải...';
+      document.body.appendChild(spinner);
+      return spinner;
+    }
+
+    // Hàm phụ trợ để hiển thị hoặc ẩn spinner loading, được gọi trong quá trình tải 
+    // dữ liệu để cung cấp phản hồi trực quan cho người dùng về trạng thái tải.
+    function setSpinnerVisible(visible) {
+      getSpinnerElement().classList.toggle('hidden', !visible);
+    }
+
+    // Hàm phụ trợ để thêm các thẻ nhân viên mới vào lưới hiện tại, 
+    // được gọi sau khi nhận được dữ liệu từ server để cập nhật giao diện với các nhân viên mới.
+    function appendEmployees(employees) {
+      if (!employees.length) return;
+      document.getElementById('grid').insertAdjacentHTML('beforeend', employees.map(renderEmployeeCard).join(''));
+    }
+
+    // Hàm chính để tải thêm dữ liệu nhân sự từ server và cập nhật giao diện tương ứng, 
+    // bao gồm xử lý trạng thái loading, hiển thị lỗi, và cập nhật thông tin tổng số nhân sự và trang hiện tại.
+    function loadMore() {
+      if (loading || !hasMore) return;
+      loading = true;
+      setSpinnerVisible(true);
+
+      if (currentPage === 1) {
+        setStatus('Đang tải dữ liệu nhân sự...', false);
+      }
+
+      google.script.run
+        .withSuccessHandler((res) => {
+          loading = false;
+          setSpinnerVisible(false);
+
+          if (!res || !res.ok) {
+            hasMore = false;
+            setStatus((res && res.message) || 'Không thể tải dữ liệu bộ phận', true);
+            return;
+          }
+
+          const data = Array.isArray(res.data) ? res.data : [];
+          totalEmployees = Number(res.total) || 0;
+          totalPages = Math.max(1, Number(res.totalPages) || 1);
+
+          if (!data.length && currentPage === 1) {
+            hasMore = false;
+            if (observer) observer.disconnect();
+            setStatus('Không có dữ liệu nhân sự trong bộ phận này.', false);
+            return;
+          }
+
+          appendEmployees(data);
+          setStatus(`Trang ${Math.min(currentPage, totalPages)}/${totalPages} • Tổng nhân sự: ${totalEmployees}`, false);
+
+          if (currentPage < totalPages) {
+            currentPage += 1;
+            initInfiniteScroll();
+          } else {
+            hasMore = false;
+            if (observer) observer.disconnect();
+          }
+
+          setTimeout(() => {
+            const doc = document.documentElement;
+            if (doc.scrollHeight <= window.innerHeight && hasMore && !loading) {
+              loadMore();
+            }
+          }, 200);
+        })
+        .withFailureHandler(() => {
+          loading = false;
+          hasMore = false;
+          if (observer) observer.disconnect();
+          setSpinnerVisible(false);
+          setStatus('Không thể tải dữ liệu bộ phận', true);
+        })
+        .getDepartmentEmployees(DEPARTMENT, currentPage, PAGE_SIZE);
+    }
+
+    // Hàm khởi tạo hệ thống cuộn vô hạn bằng IntersectionObserver 
+    // để tự động tải thêm dữ liệu khi người dùng cuộn đến cuối trang.
+    function initInfiniteScroll() {
+      const trigger = document.getElementById('loadMoreTrigger');
+      if (!trigger) return;
+
+      if (observer) observer.disconnect();
+
+      observer = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        if (!entry || !entry.isIntersecting) return;
+        if (!loading && hasMore) {
+          console.log('IntersectionObserver → loadMore()');
+          loadMore();
+        }
+      }, {
+        root: null,
+        rootMargin: '200px',
+        threshold: 0,
+      });
+
+      observer.observe(trigger);
+    }
+
+    // Khởi động quá trình tải dữ liệu khi trang được tải hoàn toàn,
+    // đảm bảo rằng tất cả các phần tử cần thiết đã sẵn sàng trước khi bắt đầu tải dữ liệu nhân sự.
+    window.addEventListener('load', () => {
+      document.getElementById('grid').innerHTML = '';
+      currentPage = 1;
+      totalPages = 1;
+      totalEmployees = 0;
+      loading = false;
+      hasMore = true;
+      setSpinnerVisible(false);
+      initInfiniteScroll();
+      loadMore();
+    });
+  </script>
+</body>
+
+</html>

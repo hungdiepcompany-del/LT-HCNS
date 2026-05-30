@@ -1,0 +1,790 @@
+<div class="page-safety" id="safetyRoot">
+  <style>
+    .page-safety {
+      width: min(1480px, 97vw);
+      margin: 0 auto;
+      color: var(--text-primary);
+    }
+
+    .page-safety * {
+      box-sizing: border-box;
+    }
+
+    .page-safety .ehs-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .page-safety h1,
+    .page-safety h2,
+    .page-safety h3,
+    .page-safety p {
+      margin: 0;
+    }
+
+    .page-safety .ehs-title {
+      display: grid;
+      gap: 6px;
+    }
+
+    .page-safety .ehs-title h1 {
+      font-size: clamp(1.35rem, 2.2vw, 2rem);
+      letter-spacing: 0;
+    }
+
+    .page-safety .ehs-title p,
+    .page-safety .muted,
+    .page-safety .panel-meta {
+      color: var(--text-secondary);
+    }
+
+    .page-safety .ehs-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .page-safety .ehs-btn {
+      border: 1px solid rgba(120,145,255,0.34);
+      border-radius: 10px;
+      background: rgba(18, 31, 78, 0.9);
+      color: var(--text-primary);
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background var(--transition), border var(--transition), transform var(--transition);
+    }
+
+    .page-safety .ehs-btn:hover {
+      background: rgba(77, 163, 255, 0.18);
+      border-color: rgba(77, 163, 255, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .page-safety .ehs-btn.primary {
+      border-color: rgba(32, 227, 255, 0.38);
+      background: linear-gradient(135deg, rgba(77, 163, 255, 0.95), rgba(45, 212, 191, 0.82));
+      color: #07111f;
+    }
+
+    .page-safety .ehs-state {
+      min-height: 20px;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+    }
+
+    .page-safety .ehs-state.is-error {
+      color: #ff9aae;
+    }
+
+    .page-safety .ehs-state.is-ok {
+      color: #7af3d5;
+    }
+
+    .page-safety .filter-panel,
+    .page-safety .ehs-panel,
+    .page-safety .kpi-card,
+    .page-safety .modal-card {
+      border-radius: var(--radius-lg);
+      border: var(--border-soft);
+      background: linear-gradient(160deg, rgba(17, 27, 67, 0.88), rgba(11, 18, 48, 0.97));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .page-safety .filter-panel {
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .page-safety .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(130px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    .page-safety label {
+      display: grid;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+    }
+
+    .page-safety input,
+    .page-safety select,
+    .page-safety textarea {
+      width: 100%;
+      border: 1px solid rgba(120,145,255,0.28);
+      border-radius: 10px;
+      background: rgba(8, 15, 42, 0.86);
+      color: var(--text-primary);
+      padding: 9px 10px;
+      outline: none;
+      font: inherit;
+      min-width: 0;
+    }
+
+    .page-safety textarea {
+      min-height: 78px;
+      resize: vertical;
+    }
+
+    .page-safety input:focus,
+    .page-safety select:focus,
+    .page-safety textarea:focus {
+      border-color: rgba(32, 227, 255, 0.64);
+      box-shadow: 0 0 0 3px rgba(32, 227, 255, 0.1);
+    }
+
+    .page-safety .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(132px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .page-safety .kpi-card {
+      padding: 14px;
+      min-height: 122px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-safety .kpi-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 3px;
+      background: var(--kpi-color, #4da3ff);
+      opacity: 0.95;
+    }
+
+    .page-safety .kpi-card.good { --kpi-color: #22c55e; }
+    .page-safety .kpi-card.warn { --kpi-color: #facc15; }
+    .page-safety .kpi-card.danger { --kpi-color: #ef4444; }
+    .page-safety .kpi-card.critical { --kpi-color: #a855f7; }
+
+    .page-safety .kpi-label {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      line-height: 1.25;
+    }
+
+    .page-safety .kpi-value {
+      font-size: 1.7rem;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .page-safety .kpi-delta {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      color: var(--text-secondary);
+      font-size: 0.73rem;
+      line-height: 1.2;
+    }
+
+    .page-safety .kpi-delta.good { color: #7af3d5; background: rgba(34,197,94,0.12); }
+    .page-safety .kpi-delta.warn { color: #ffe08a; background: rgba(250,204,21,0.12); }
+    .page-safety .kpi-delta.danger { color: #ff9aae; background: rgba(239,68,68,0.13); }
+
+    .page-safety .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .page-safety .ehs-panel {
+      padding: 16px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .page-safety .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-safety .panel-title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .page-safety .panel-title h2 {
+      font-size: 1.05rem;
+    }
+
+    .page-safety .chart-wrap {
+      position: relative;
+      min-height: 320px;
+    }
+
+    .page-safety canvas {
+      width: 100%;
+      display: block;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(23, 37, 90, 0.35), rgba(14, 22, 55, 0.12));
+    }
+
+    .page-safety .severity-chart {
+      height: 360px;
+    }
+
+    .page-safety .line-chart {
+      height: 210px;
+    }
+
+    .page-safety .legend {
+      display: flex;
+      align-items: center;
+      gap: 8px 14px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+    }
+
+    .page-safety .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-safety .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .page-safety .tooltip {
+      position: fixed;
+      z-index: 30;
+      min-width: 210px;
+      max-width: min(320px, calc(100vw - 24px));
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(120,145,255,0.36);
+      background: rgba(7, 13, 34, 0.97);
+      color: var(--text-primary);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.36);
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, calc(-100% - 12px));
+      transition: opacity 110ms ease;
+      font-size: 0.8rem;
+    }
+
+    .page-safety .tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .page-safety .tooltip strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.86rem;
+    }
+
+    .page-safety .tooltip div {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .page-safety .heatmap {
+      display: grid;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .page-safety .heat-row,
+    .page-safety .heat-head {
+      display: grid;
+      grid-template-columns: 112px repeat(6, minmax(62px, 1fr));
+      gap: 6px;
+      min-width: 560px;
+      align-items: center;
+    }
+
+    .page-safety .heat-head {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+    }
+
+    .page-safety .heat-label {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+
+    .page-safety .heat-cell {
+      min-height: 42px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      cursor: default;
+      color: #06111f;
+    }
+
+    .page-safety .heat-cell.empty {
+      color: var(--text-secondary);
+      background: rgba(90,104,156,0.16);
+    }
+
+    .page-safety .table-toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(150px, 0.45fr));
+      gap: 10px;
+      margin-bottom: 12px;
+      align-items: end;
+    }
+
+    .page-safety .table-wrap {
+      overflow: auto;
+      max-height: 520px;
+      border-radius: 12px;
+      border: 1px solid rgba(109, 130, 201, 0.16);
+    }
+
+    .page-safety table {
+      width: 100%;
+      min-width: 1280px;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.82rem;
+    }
+
+    .page-safety th,
+    .page-safety td {
+      padding: 10px 11px;
+      border-bottom: 1px solid rgba(109, 130, 201, 0.16);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .page-safety th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(13, 23, 61, 0.98);
+      color: #b8c7f3;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .page-safety tbody tr {
+      background: rgba(14, 23, 58, 0.34);
+      cursor: pointer;
+    }
+
+    .page-safety tbody tr:hover {
+      background: rgba(77, 163, 255, 0.1);
+    }
+
+    .page-safety .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      white-space: nowrap;
+      background: rgba(255,255,255,0.08);
+      color: var(--text-primary);
+    }
+
+    .page-safety .badge.nearMiss { color: #7af3a8; background: rgba(34,197,94,0.14); }
+    .page-safety .badge.minor { color: #8bd3ff; background: rgba(56,189,248,0.14); }
+    .page-safety .badge.medical { color: #ffc06b; background: rgba(249,115,22,0.16); }
+    .page-safety .badge.lti { color: #ff9aae; background: rgba(239,68,68,0.16); }
+    .page-safety .badge.fatal { color: #d8b4fe; background: rgba(88,28,135,0.35); }
+    .page-safety .badge.open { color: #ffe08a; background: rgba(250,204,21,0.14); }
+    .page-safety .badge.closed { color: #7af3d5; background: rgba(45,212,191,0.14); }
+
+    .page-safety .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .page-safety .form-grid .wide {
+      grid-column: span 2;
+    }
+
+    .page-safety .form-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .page-safety .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-safety .empty-state {
+      padding: 26px;
+      text-align: center;
+      color: var(--text-secondary);
+      border: 1px dashed rgba(120,145,255,0.3);
+      border-radius: 12px;
+      background: rgba(14, 22, 55, 0.48);
+    }
+
+    .page-safety .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 45;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(3, 8, 25, 0.68);
+    }
+
+    .page-safety .modal.hidden {
+      display: none;
+    }
+
+    .page-safety .modal-card {
+      width: min(880px, 96vw);
+      max-height: 88vh;
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .page-safety .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .page-safety .detail-item {
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(14, 22, 55, 0.7);
+      border: 1px solid rgba(114, 145, 255, 0.16);
+    }
+
+    .page-safety .detail-item small {
+      display: block;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+
+    @media (max-width: 1260px) {
+      .page-safety .kpi-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .page-safety .filter-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .page-safety .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .page-safety .kpi-grid,
+      .page-safety .filter-grid,
+      .page-safety .table-toolbar,
+      .page-safety .form-grid,
+      .page-safety .detail-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .page-safety .form-grid .wide,
+      .page-safety .form-grid .full {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page-safety {
+        width: min(100%, 96vw);
+      }
+
+      .page-safety .kpi-grid,
+      .page-safety .filter-grid,
+      .page-safety .table-toolbar,
+      .page-safety .form-grid,
+      .page-safety .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-safety .ehs-actions {
+        width: 100%;
+      }
+
+      .page-safety .ehs-btn {
+        flex: 1 1 auto;
+      }
+    }
+  </style>
+
+  <header class="ehs-header">
+    <div class="ehs-title">
+      <h1>An toàn lao động - Bảng điều hành EHS/MES</h1>
+      <p>Giám sát tháng nguy hiểm, công đoạn rủi ro và ảnh hưởng vận hành từ sự cố an toàn.</p>
+    </div>
+    <div class="ehs-actions">
+      <button class="ehs-btn" type="button" id="safetyResetFiltersBtn">Đặt lại bộ lọc</button>
+      <button class="ehs-btn primary" type="button" id="safetyNewIncidentBtn">Thêm sự cố</button>
+    </div>
+  </header>
+
+  <div class="ehs-state" id="safetyState">Đang tải dashboard an toàn lao động...</div>
+
+  <section class="filter-panel" aria-label="Bộ lọc dữ liệu an toàn">
+    <div class="filter-grid">
+      <label>Từ tháng
+        <input id="safetyFilterFrom" type="month" />
+      </label>
+      <label>Đến tháng
+        <input id="safetyFilterTo" type="month" />
+      </label>
+      <label>Công đoạn
+        <select id="safetyFilterProcess"></select>
+      </label>
+      <label>Mức độ
+        <select id="safetyFilterSeverity"></select>
+      </label>
+      <label>Tổ/nhóm
+        <select id="safetyFilterTeam"></select>
+      </label>
+      <label>Ca làm
+        <select id="safetyFilterShift"></select>
+      </label>
+      <label>Trạng thái hồ sơ
+        <select id="safetyFilterStatus"></select>
+      </label>
+    </div>
+  </section>
+
+  <section class="kpi-grid" id="safetyKpiGrid" aria-label="Chỉ số tổng hợp an toàn"></section>
+
+  <section class="main-grid">
+    <div>
+      <article class="ehs-panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <h2>Tháng nguy hiểm theo mức độ sự cố</h2>
+            <p class="panel-meta">Cột chồng = số vụ theo mức độ, đường xanh = nhân lực bị ảnh hưởng</p>
+          </div>
+          <span class="panel-meta" id="safetyChartMeta">Đang tổng hợp...</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="safetySeverityChart" class="severity-chart" height="360"></canvas>
+          <div class="legend" id="safetySeverityLegend"></div>
+        </div>
+      </article>
+
+      <article class="ehs-panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <h2>Bảng sự cố/tai nạn chi tiết</h2>
+            <p class="panel-meta">Có tìm kiếm, lọc, sắp xếp và bấm dòng để xem chi tiết</p>
+          </div>
+          <span class="panel-meta" id="safetyTableMeta">0 hồ sơ</span>
+        </div>
+        <div class="table-toolbar">
+          <label>Tìm kiếm
+            <input id="safetySearchInput" type="search" placeholder="Tìm mã vụ việc, người liên quan, nguyên nhân..." />
+          </label>
+          <label>Tháng
+            <select id="safetyTableMonth"></select>
+          </label>
+          <label>Công đoạn
+            <select id="safetyTableProcess"></select>
+          </label>
+          <label>Mức độ
+            <select id="safetyTableSeverity"></select>
+          </label>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-sort="id">Mã vụ việc</th>
+                <th data-sort="date">Ngày xảy ra</th>
+                <th data-sort="month">Tháng</th>
+                <th data-sort="person">Người bị tai nạn</th>
+                <th data-sort="department">Bộ phận</th>
+                <th data-sort="process">Công đoạn</th>
+                <th data-sort="severity">Mức độ</th>
+                <th data-sort="lostTime">Phân loại mất ngày công</th>
+                <th data-sort="permanentImpact">Ảnh hưởng vĩnh viễn</th>
+                <th data-sort="affectedPeople">Số người ảnh hưởng</th>
+                <th data-sort="daysOff">Số ngày nghỉ</th>
+                <th data-sort="status">Trạng thái xử lý</th>
+                <th data-sort="rootCause">Nguyên nhân sơ bộ</th>
+                <th data-sort="correctiveAction">Biện pháp khắc phục</th>
+                <th data-sort="owner">Người phụ trách</th>
+                <th data-sort="dueDate">Ngày hoàn thành</th>
+              </tr>
+            </thead>
+            <tbody id="safetyIncidentTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <aside>
+      <article class="ehs-panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <h2>Ảnh hưởng vận hành</h2>
+            <p class="panel-meta">Theo dõi LTI, công việc hạn chế và nhân lực ảnh hưởng</p>
+          </div>
+        </div>
+        <canvas id="safetyLostManpowerChart" class="line-chart" height="210"></canvas>
+        <div class="legend" id="safetyLostManpowerLegend"></div>
+      </article>
+
+      <article class="ehs-panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <h2>Heatmap rủi ro theo công đoạn</h2>
+            <p class="panel-meta">Màu ô = điểm severity theo công đoạn và tháng</p>
+          </div>
+        </div>
+        <div class="heatmap" id="safetyProcessHeatmap"></div>
+      </article>
+    </aside>
+  </section>
+
+  <article class="ehs-panel">
+    <div class="panel-head">
+      <div class="panel-title">
+        <h2>Form nhập/sửa sự cố</h2>
+        <p class="panel-meta">Dữ liệu hiện lưu tạm trên giao diện; sau này có thể nối API/Google Sheet bằng cùng schema.</p>
+      </div>
+      <span class="panel-meta" id="safetyFormMode">Tạo hồ sơ mới</span>
+    </div>
+    <form id="safetyIncidentForm">
+      <div class="form-grid">
+        <label>Mã vụ việc
+          <input name="id" required />
+        </label>
+        <label>Ngày xảy ra
+          <input name="date" type="date" required />
+        </label>
+        <label>Giờ xảy ra
+          <input name="time" type="time" required />
+        </label>
+        <label>Công đoạn
+          <select name="process" required></select>
+        </label>
+        <label>Khu vực/vị trí
+          <input name="location" required />
+        </label>
+        <label>Người liên quan
+          <input name="person" required />
+        </label>
+        <label>Bộ phận/tổ/ca
+          <input name="department" required />
+        </label>
+        <label>Ca làm
+          <select name="shift" required></select>
+        </label>
+        <label>Mức độ sự cố
+          <select name="severity" required></select>
+        </label>
+        <label>Phân loại mất ngày công
+          <select name="lostTime" required></select>
+        </label>
+        <label>Ảnh hưởng vĩnh viễn
+          <select name="permanentImpact" required></select>
+        </label>
+        <label>Trạng thái xử lý
+          <select name="status" required></select>
+        </label>
+        <label>Số ngày nghỉ
+          <input name="daysOff" type="number" min="0" step="1" />
+        </label>
+        <label>Số người bị ảnh hưởng
+          <input name="affectedPeople" type="number" min="0" step="1" required />
+        </label>
+        <label>Có đổi việc nhẹ không
+          <select name="restrictedWork" required></select>
+        </label>
+        <label>Có nghỉ dài hạn không
+          <select name="longTermAbsence" required></select>
+        </label>
+        <label>Có mất khả năng lao động không
+          <select name="permanentLost" required></select>
+        </label>
+        <label>Người phụ trách
+          <input name="owner" required />
+        </label>
+        <label>Hạn hoàn thành
+          <input name="dueDate" type="date" required />
+        </label>
+        <label class="wide">Mô tả sự việc
+          <textarea name="description" required></textarea>
+        </label>
+        <label class="wide">Nguyên nhân sơ bộ
+          <textarea name="rootCause" required></textarea>
+        </label>
+        <label class="wide">Nguyên nhân gốc rễ
+          <textarea name="deepCause"></textarea>
+        </label>
+        <label class="wide">Biện pháp khắc phục
+          <textarea name="correctiveAction" required></textarea>
+        </label>
+        <label class="full">Ghi chú
+          <textarea name="note"></textarea>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="ehs-btn" type="button" id="safetyCancelEditBtn">Hủy sửa</button>
+        <button class="ehs-btn primary" type="submit">Lưu hồ sơ</button>
+      </div>
+    </form>
+  </article>
+
+  <div class="tooltip" id="safetyTooltip" role="status" aria-live="polite"></div>
+
+  <div class="modal hidden" id="safetyDetailModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="panel-head">
+        <div class="panel-title">
+          <h2 id="safetyDetailTitle">Chi tiết sự cố</h2>
+          <p class="panel-meta" id="safetyDetailMeta"></p>
+        </div>
+        <button class="ehs-btn" type="button" id="safetyDetailCloseBtn">Đóng</button>
+      </div>
+      <div class="detail-grid" id="safetyDetailGrid"></div>
+      <div class="form-actions">
+        <button class="ehs-btn primary" type="button" id="safetyEditFromDetailBtn">Sửa hồ sơ này</button>
+      </div>
+    </div>
+  </div>
+</div>

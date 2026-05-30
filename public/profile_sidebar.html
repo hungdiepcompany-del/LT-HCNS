@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <base target="_top" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --line: #e5e7eb;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --ok-bg: #ecfdf3;
+      --ok-fg: #166534;
+      --bad-bg: #fef2f2;
+      --bad-fg: #b91c1c;
+      --shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Tahoma, Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    body.modal-mode {
+      font-size: 16px;
+    }
+
+    .dashboard {
+      min-height: calc(100vh - 32px);
+      padding: 16px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    body.modal-mode .dashboard {
+      padding: 28px;
+      border-radius: 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    body.modal-mode .title {
+      font-size: 26px;
+    }
+
+    .sync {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .nav-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+
+    .nav-item,
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .nav-item {
+      min-width: 100px;
+      padding: 9px 12px;
+      color: var(--muted);
+      background: transparent;
+    }
+
+    .nav-item.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    body.modal-mode .grid {
+      grid-template-columns: minmax(260px, 0.8fr) minmax(0, 2fr);
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .card-body {
+      padding: 14px;
+    }
+
+    body.modal-mode .card-body {
+      padding: 22px;
+    }
+
+    .avatar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .avatar {
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid #dbeafe;
+      background: #eef2ff;
+    }
+
+    body.modal-mode .avatar {
+      width: 210px;
+      height: 210px;
+    }
+
+    .name {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    body.modal-mode .name {
+      font-size: 28px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid #bfdbfe;
+    }
+
+    .status-badge.inactive {
+      background: var(--bad-bg);
+      color: var(--bad-fg);
+      border-color: #fecaca;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    body.modal-mode .kv {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #f8fafc;
+    }
+
+    .label {
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .actions.hidden,
+    .hidden {
+      display: none;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      color: #ffffff;
+      background: var(--accent);
+    }
+
+    .btn.secondary {
+      color: var(--accent);
+      border: 1px solid #bfdbfe;
+      background: var(--accent-soft);
+    }
+
+    .select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    .message {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .message.error {
+      border-color: #fecaca;
+      background: var(--bad-bg);
+      color: var(--bad-fg);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <div class="header">
+      <h1 class="title">Hồ sơ nhân sự</h1>
+      <div class="sync" id="syncTime">Đang tải...</div>
+    </div>
+
+    <div id="navBar" class="nav-bar" role="tablist" aria-label="Điều hướng module">
+      <button id="navNhanSu" class="nav-item active" type="button" data-view="viewNhanSu">Nhân sự</button>
+      <button id="navBoPhan" class="nav-item" type="button" data-view="viewBoPhan">Bộ phận</button>
+    </div>
+
+    <section id="viewNhanSu" class="view active">
+      <div class="grid">
+        <article class="card">
+          <div class="card-body avatar-wrap">
+            <img id="avatar" class="avatar" src="https://via.placeholder.com/320x320.png?text=No+Avatar"
+              alt="Ảnh nhân sự" />
+            <div>
+              <h2 id="employeeName" class="name">Chưa chọn nhân viên</h2>
+              <div id="employeeCode" class="muted">-</div>
+            </div>
+            <span id="statusBadge" class="status-badge">Chưa có dữ liệu</span>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-body">
+            <h3 class="section-title">Thông tin chi tiết</h3>
+            <div class="kv" id="profileFields"></div>
+            <div id="detailActions" class="actions">
+              <button class="btn" type="button" id="openProfileBtn">Xem chi tiết</button>
+            </div>
+            <div id="profileMessage" class="message">Vui lòng chọn một nhân viên trong sheet.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="viewBoPhan" class="view">
+      <article class="card">
+        <div class="card-body">
+          <h3 class="section-title">Thông tin bộ phận</h3>
+          <label class="label" for="departmentSelect">Chọn bộ phận</label>
+          <select id="departmentSelect" class="select">
+            <option value="">-- Chọn bộ phận --</option>
+          </select>
+          <div id="departmentAction" class="actions hidden">
+            <button class="btn" type="button" id="openDepartmentBtn">Xem chi tiết</button>
+          </div>
+          <div id="departmentMessage" class="message">Đang tải danh sách bộ phận...</div>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      var API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxCWUHr-33sTja9_mOE1r0-wDEfQ2iHnMiEerja0gujBicQpI82uWRbsMpDMk-b6oNw0g/exec';
+
+      function callAppsScriptApi_(baseUrl, functionName, payload) {
+        return new Promise(function (resolve, reject) {
+          var callbackName = '__gasJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+          var serializedPayload = typeof payload === 'undefined' ? 'null' : JSON.stringify(payload);
+          var script = document.createElement('script');
+          var timeoutId = setTimeout(function () {
+            cleanup();
+            reject(new Error('Timed out while calling Apps Script.'));
+          }, 30000);
+
+          function cleanup() {
+            clearTimeout(timeoutId);
+            if (script.parentNode) {
+              script.parentNode.removeChild(script);
+            }
+
+            try {
+              delete window[callbackName];
+            } catch (error) {
+              window[callbackName] = undefined;
+            }
+          }
+
+          window[callbackName] = function (result) {
+            cleanup();
+            if (result && result.error) {
+              reject(new Error(result.error));
+              return;
+            }
+            resolve(result);
+          };
+
+          script.async = true;
+          script.src = baseUrl
+            + (baseUrl.indexOf('?') === -1 ? '?' : '&')
+            + 'action=' + encodeURIComponent(functionName)
+            + '&data=' + encodeURIComponent(serializedPayload)
+            + '&callback=' + encodeURIComponent(callbackName)
+            + '&_ts=' + Date.now();
+          script.onerror = function () {
+            cleanup();
+            reject(new Error('Failed to load Apps Script API.'));
+          };
+
+          document.head.appendChild(script);
+        });
+      }
+
+      window.API = window.API || {
+        call: function (functionName, payload) {
+          if (window.google && google.script && google.script.run) {
+            return new Promise(function (resolve, reject) {
+              var args = Array.isArray(payload)
+                ? payload
+                : (typeof payload === 'undefined' || payload === null ? [] : [payload]);
+              var runner = google.script.run
+                .withSuccessHandler(resolve)
+                .withFailureHandler(reject);
+              runner[functionName].apply(runner, args);
+            });
+          }
+
+          return callAppsScriptApi_(API_BASE_URL, functionName, payload);
+        }
+      };
+    })();
+
+    (function () {
+      var REFRESH_MS = 3000;
+      var lastVersion = '';
+      var isFetching = false;
+      var timerId = null;
+
+      function $(id) {
+        return document.getElementById(id);
+      }
+
+      function escapeHtml(value) {
+        return String(value == null || value === '' ? '-' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function setMessage(id, message, isError) {
+        var el = $(id);
+        if (!el) return;
+        el.textContent = message || '';
+        el.classList.toggle('error', Boolean(isError));
+        el.classList.toggle('hidden', !message);
+      }
+
+      function setSync(text) {
+        var el = $('syncTime');
+        if (el) el.textContent = text;
+      }
+
+      function renderEmpty(message) {
+        $('employeeName').textContent = 'Chưa chọn nhân viên';
+        $('employeeCode').textContent = '-';
+        $('avatar').src = 'https://via.placeholder.com/320x320.png?text=No+Avatar';
+        $('statusBadge').textContent = 'Chưa có dữ liệu';
+        $('statusBadge').classList.remove('inactive');
+        $('profileFields').innerHTML = '';
+        setMessage('profileMessage', message || 'Vui lòng chọn một nhân viên trong sheet.', true);
+        setSync('Đang chờ chọn...');
+      }
+
+      function renderProfile(profile) {
+        $('employeeName').textContent = profile.name || '-';
+        $('employeeCode').textContent = profile.code || '-';
+        $('avatar').src = profile.imageUrl || 'https://via.placeholder.com/320x320.png?text=No+Avatar';
+
+        var status = profile.status || '-';
+        $('statusBadge').textContent = status;
+        $('statusBadge').classList.toggle('inactive', status.toLowerCase().indexOf('ngh') !== -1);
+
+        var fields = [
+          ['Bộ phận', profile.department],
+          ['Giới tính', profile.gender],
+          ['Ngày sinh', profile.birthDate],
+          ['Ngày vào làm', profile.startDate],
+          ['Số điện thoại', profile.phone],
+          ['Email', profile.email],
+          ['CCCD', profile.idNumber],
+          ['BHXH', profile.socialInsurance],
+          ['Hợp đồng', profile.contractType],
+          ['Địa chỉ', profile.tempAddress],
+          ['Ghi chú', profile.notes]
+        ];
+
+        $('profileFields').innerHTML = fields.map(function (pair) {
+          return '<div class="item"><div class="label">' + escapeHtml(pair[0]) +
+            '</div><div class="value">' + escapeHtml(pair[1]) + '</div></div>';
+        }).join('');
+
+        setMessage('profileMessage', '', false);
+        setSync('Cập nhật: ' + new Date().toLocaleString('vi-VN', { hour12: false }));
+      }
+
+      function fetchAndRenderProfile() {
+        if (isFetching) return;
+        isFetching = true;
+
+        API.call('getCurrentProfile')
+          .then(function (res) {
+            isFetching = false;
+            if (!res || !res.ok || !res.data) {
+              renderEmpty((res && res.message) || 'Vui lòng chọn nhân viên');
+              return;
+            }
+            renderProfile(res.data);
+          })
+          .catch(function (error) {
+            isFetching = false;
+            renderEmpty(error && error.message ? error.message : 'Không thể tải dữ liệu');
+          });
+      }
+
+      function checkVersionAndRefresh() {
+        if (isFetching) return;
+
+        API.call('getProfileVersion')
+          .then(function (res) {
+            if (!res || !res.ok) return;
+            var version = res.version || '';
+            if (version !== lastVersion) {
+              lastVersion = version;
+              fetchAndRenderProfile();
+            }
+          })
+          .catch(function () { });
+      }
+
+      function loadDepartments() {
+        API.call('getDepartmentList')
+          .then(function (res) {
+            if (!res || !res.ok || !Array.isArray(res.data)) {
+              setMessage('departmentMessage', (res && res.message) || 'Không thể tải danh sách bộ phận', true);
+              return;
+            }
+
+            var select = $('departmentSelect');
+            select.innerHTML = '<option value="">-- Chọn bộ phận --</option>' + res.data.map(function (dept) {
+              return '<option value="' + escapeHtml(dept) + '">' + escapeHtml(dept) + '</option>';
+            }).join('');
+
+            setMessage('departmentMessage', res.data.length ? '' : 'Chưa có dữ liệu bộ phận', false);
+          })
+          .catch(function (error) {
+            setMessage('departmentMessage', error && error.message ? error.message : 'Không thể tải danh sách bộ phận', true);
+          });
+      }
+
+      function initMode() {
+        var modalMode = window.innerWidth >= 900;
+        document.body.classList.toggle('modal-mode', modalMode);
+        var navBar = $('navBar');
+        var actions = $('detailActions');
+        if (navBar) navBar.style.display = modalMode ? 'none' : '';
+        if (actions) actions.classList.toggle('hidden', modalMode);
+      }
+
+      function initNavigation() {
+        var navItems = Array.prototype.slice.call(document.querySelectorAll('.nav-item'));
+        navItems.forEach(function (item) {
+          item.addEventListener('click', function () {
+            var viewId = item.getAttribute('data-view');
+            navItems.forEach(function (nav) { nav.classList.remove('active'); });
+            Array.prototype.slice.call(document.querySelectorAll('.view')).forEach(function (view) {
+              view.classList.toggle('active', view.id === viewId);
+            });
+            item.classList.add('active');
+          });
+        });
+      }
+
+      function bindActions() {
+        var deptSelect = $('departmentSelect');
+        var deptAction = $('departmentAction');
+
+        if (deptSelect) {
+          deptSelect.addEventListener('change', function () {
+            deptAction.classList.toggle('hidden', !deptSelect.value);
+          });
+        }
+
+        $('openProfileBtn').addEventListener('click', function () {
+          API.call('openFullProfile').catch(function (error) {
+            setMessage('profileMessage', error && error.message ? error.message : 'Chỉ mở được trong Google Sheets.', true);
+          });
+        });
+
+        $('openDepartmentBtn').addEventListener('click', function () {
+          var dept = deptSelect ? deptSelect.value : '';
+          if (!dept) return;
+          API.call('openDepartmentDetail', dept).catch(function (error) {
+            setMessage('departmentMessage', error && error.message ? error.message : 'Chỉ mở được trong Google Sheets.', true);
+          });
+        });
+      }
+
+      function init() {
+        initMode();
+        initNavigation();
+        bindActions();
+        loadDepartments();
+        fetchAndRenderProfile();
+        timerId = window.setInterval(checkVersionAndRefresh, REFRESH_MS);
+      }
+
+      window.addEventListener('resize', initMode);
+      window.addEventListener('beforeunload', function () {
+        if (timerId) window.clearInterval(timerId);
+      });
+      document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</body>
+
+</html>

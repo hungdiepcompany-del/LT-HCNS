@@ -1,0 +1,1056 @@
+<div class="page-employee-list">
+  <style>
+    /* ============================= INHERIT THEME FROM INDEX.HTML ============================== */
+    .page-employee-list {
+      width: min(1380px, 96vw);
+      margin: 0 auto;
+      padding: 0;
+    }
+
+    /* ============================= HEADER & TITLE ============================== */
+    .page-employee-list .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .page-employee-list h1 {
+      margin: 0;
+      font-size: clamp(1.3rem, 2.7vw, 1.9rem);
+      color: var(--text-primary);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .page-employee-list .clock {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* ============================= PANEL & LAYOUT ============================== */
+    .page-employee-list .panel {
+      background: linear-gradient(135deg, rgba(17, 27, 67, 0.4), rgba(11, 18, 48, 0.45));
+      border-radius: var(--radius-lg);
+      border: var(--border-soft);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    /* ============================= TOOLBAR & FILTERS ============================== */
+    .page-employee-list .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 20px;
+      border-bottom: var(--border-soft);
+      flex-wrap: wrap;
+    }
+
+    .page-employee-list .search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1 1 auto;
+      min-width: 240px;
+      max-width: 360px;
+    }
+
+    .page-employee-list .search input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid rgba(120, 145, 255, 0.3);
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all var(--transition);
+      backdrop-filter: blur(4px);
+    }
+
+    .page-employee-list .search input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .page-employee-list .search input:focus {
+      border-color: var(--accent-blue);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.1);
+    }
+
+    .page-employee-list .filters {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-employee-list .filter {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .page-employee-list .filter label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .page-employee-list .filter select {
+      padding: 9px 12px;
+      border: 1px solid rgba(120, 145, 255, 0.3);
+      background: rgba(20, 25, 50, 0.9);
+      color: var(--text-primary);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all var(--transition);
+      backdrop-filter: blur(4px);
+      cursor: pointer;
+    }
+
+    .page-employee-list .filter select:hover {
+      border-color: rgba(120, 145, 255, 0.5);
+      background: rgba(30, 40, 70, 0.9);
+    }
+
+    .page-employee-list .filter select:focus {
+      border-color: var(--accent-blue);
+      background: rgba(35, 45, 75, 0.95);
+      box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.1);
+    }
+
+    /* Dark theme for native select options */
+    .page-employee-list .filter select option {
+      background: rgba(20, 25, 50, 0.95);
+      color: var(--text-primary);
+      padding: 8px 12px;
+    }
+
+    .page-employee-list .filter select option:hover,
+    .page-employee-list .filter select option:checked {
+      background: rgba(77, 163, 255, 0.3);
+      color: var(--text-primary);
+    }
+
+    .page-employee-list .meta {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      padding: 0 20px 12px;
+    }
+
+    /* ============================= TABLE ============================== */
+    .page-employee-list .table-wrap {
+      overflow-x: hidden;
+    }
+
+    .page-employee-list .table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 7px;
+      font-size: 0.95rem;
+      table-layout: fixed;
+    }
+
+    .page-employee-list .table th,
+    .page-employee-list .table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: var(--border-soft);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .page-employee-list .table th {
+      background: rgba(77, 163, 255, 0.06);
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.3px;
+    }
+
+    /* Fixed column widths to prevent horizontal scroll */
+    .page-employee-list .table th:nth-child(1),
+    .page-employee-list .table td:nth-child(1) {
+      width: 10%;
+      /* Mã NV */
+    }
+
+    .page-employee-list .table th:nth-child(2),
+    .page-employee-list .table td:nth-child(2) {
+      width: 25%;
+      /* Tên */
+    }
+
+    .page-employee-list .table th:nth-child(3),
+    .page-employee-list .table td:nth-child(3) {
+      width: 8%;
+      /* Giới tính */
+    }
+
+    .page-employee-list .table th:nth-child(4),
+    .page-employee-list .table td:nth-child(4) {
+      width: 12%;
+      /* Ngày sinh */
+    }
+
+    .page-employee-list .table th:nth-child(5),
+    .page-employee-list .table td:nth-child(5) {
+      width: 15%;
+      /* Bộ phận */
+    }
+
+    .page-employee-list .table th:nth-child(6),
+    .page-employee-list .table td:nth-child(6) {
+      width: 15%;
+      /* Vị trí */
+    }
+
+    .page-employee-list .table th:nth-child(7),
+    .page-employee-list .table td:nth-child(7) {
+      width: 15%;
+      /* Cấp bậc */
+    }
+
+    .page-employee-list .table tbody tr {
+      transition: background-color 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
+    }
+
+    .page-employee-list .table tbody td {
+      background: rgba(14, 23, 58, 0.46);
+      border-top: 1px solid rgba(109, 130, 201, 0.14);
+      border-bottom: 1px solid rgba(109, 130, 201, 0.14);
+    }
+
+    .page-employee-list .table tbody td:first-child {
+      border-radius: 11px 0 0 11px;
+      border-left: 1px solid rgba(109, 130, 201, 0.14);
+    }
+
+    .page-employee-list .table tbody td:last-child {
+      border-radius: 0 11px 11px 0;
+      border-right: 1px solid rgba(109, 130, 201, 0.14);
+    }
+
+    .page-employee-list .table tbody tr:hover {
+      transform: translateX(2px);
+    }
+
+    .page-employee-list .table tbody tr:hover td {
+      background: rgba(77, 163, 255, 0.08);
+    }
+
+    .page-employee-list .table tbody tr.gender-nam td:first-child {
+      border-left: 3px solid rgba(77, 163, 255, 0.6);
+      border-top-left-radius: 11px;
+      border-bottom-left-radius: 11px;
+    }
+
+    .page-employee-list .table tbody tr.gender-nu td:first-child {
+      border-left: 3px solid rgba(255, 107, 138, 0.6);
+      border-top-left-radius: 11px;
+      border-bottom-left-radius: 11px;
+    }
+
+    .page-employee-list .table strong {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .page-employee-list .table .empty,
+    .page-employee-list .table .error {
+      text-align: center;
+      padding: 40px 16px;
+      color: var(--text-secondary);
+    }
+
+    .page-employee-list .table .error {
+      color: var(--bad);
+    }
+
+    .page-employee-list .skeleton-row td {
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
+    .page-employee-list .skeleton-cell {
+      height: 14px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, rgba(120, 145, 255, 0.2) 25%, rgba(120, 145, 255, 0.4) 50%, rgba(120, 145, 255, 0.2) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.8s infinite;
+    }
+
+    @keyframes skeleton-loading {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    /* ============================= PAGINATION ============================== */
+    .page-employee-list .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 20px;
+      border-top: var(--border-soft);
+      flex-wrap: wrap;
+    }
+
+    .page-employee-list .page-btn {
+      padding: 8px 12px;
+      border: 1px solid rgba(120, 145, 255, 0.3);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      min-width: 48px;
+      text-align: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .page-employee-list .page-btn:hover:not(:disabled) {
+      border-color: var(--accent-blue);
+      background: rgba(77, 163, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .page-employee-list .page-btn.active {
+      background: linear-gradient(120deg, var(--accent-blue), rgba(77, 163, 255, 0.8));
+      color: white;
+      border-color: var(--accent-blue);
+      box-shadow: 0 4px 12px rgba(77, 163, 255, 0.3);
+    }
+
+    .page-employee-list .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ============================= VIEW CONTROL (List/Detail) ============================== */
+    .page-employee-list .view {
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+    }
+
+    .page-employee-list .view.hidden {
+      display: none;
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    .page-employee-list .view:not(.hidden) {
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .page-employee-list .view.fade-in {
+      animation: fadeInView 0.35s ease forwards;
+    }
+
+    @keyframes fadeInView {
+      from {
+        visibility: hidden;
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ============================= DETAIL VIEW ============================== */
+    .page-employee-list .detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 24px;
+      padding: 24px 20px;
+    }
+
+    .page-employee-list .profile-card {
+      background: linear-gradient(135deg, rgba(77, 163, 255, 0.08), rgba(139, 92, 246, 0.08));
+      border-radius: var(--radius-lg);
+      border: var(--border-soft);
+      padding: 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      backdrop-filter: blur(4px);
+    }
+
+    .page-employee-list .avatar {
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 18px;
+      border: 4px solid var(--accent-blue);
+      box-shadow: 0 0 0 6px rgba(77, 163, 255, 0.1), 0 12px 40px rgba(77, 163, 255, 0.45);
+      transition: all 0.35s ease;
+    }
+
+    .page-employee-list .avatar:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 0 8px rgba(77, 163, 255, 0.15), 0 16px 50px rgba(77, 163, 255, 0.6);
+    }
+
+    .page-employee-list #detailName {
+      margin: 0 0 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .page-employee-list #detailDept {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    .page-employee-list .info-card {
+      background: linear-gradient(135deg, rgba(17, 27, 67, 0.3), rgba(11, 18, 48, 0.35));
+      border-radius: var(--radius-lg);
+      border: var(--border-soft);
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .page-employee-list .detail-title {
+      margin: 0 0 18px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(120, 145, 255, 0.2);
+    }
+
+    .page-employee-list .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .page-employee-list .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(120, 145, 255, 0.15);
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .page-employee-list .info-item:hover {
+      background: rgba(77, 163, 255, 0.06);
+      border-color: rgba(120, 145, 255, 0.3);
+    }
+
+    .page-employee-list .info-item small {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+    }
+
+    .page-employee-list .info-item strong {
+      color: var(--text-primary);
+      font-size: 0.98rem;
+      word-break: break-word;
+    }
+
+    .page-employee-list mark {
+      background: rgba(255, 204, 102, 0.3);
+      color: var(--warn);
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    /* ============================= BACK BUTTON & BADGE ============================== */
+    .page-employee-list .back-btn {
+      padding: 9px 16px;
+      background: linear-gradient(120deg, var(--accent-blue), rgba(77, 163, 255, 0.8));
+      color: white;
+      border: 1px solid var(--accent-blue);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(2px);
+    }
+
+    .page-employee-list .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(77, 163, 255, 0.3);
+    }
+
+    .page-employee-list .back-btn:active {
+      transform: translateY(0);
+    }
+
+    .page-employee-list .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(77, 163, 255, 0.1);
+      border: 1px solid rgba(77, 163, 255, 0.3);
+      color: var(--accent-blue);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    /* ============================= RESPONSIVE ============================== */
+    @media (max-width: 1024px) {
+      .page-employee-list .detail-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .page-employee-list .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .page-employee-list .search {
+        max-width: 100%;
+      }
+
+      .page-employee-list .filters {
+        flex-direction: column;
+      }
+
+      .page-employee-list .filter {
+        width: 100%;
+      }
+
+      .page-employee-list .filter select {
+        width: 100%;
+      }
+
+      .page-employee-list .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-employee-list h1 {
+        font-size: 1.4rem;
+      }
+    }
+  </style> <!-- HEADER -->
+  <div class="header">
+    <h1>📋 Danh sách nhân sự</h1>
+    <div id="clock" class="clock"></div>
+  </div> <!-- LIST VIEW -->
+  <div id="list-view" class="view fade-in">
+    <div class="panel">
+      <div class="toolbar">
+        <div class="search"> <input id="searchInput" type="text" placeholder="🔍 Tìm theo mã NV hoặc tên..." /> </div>
+        <div class="filters">
+          <div class="filter"> <label for="departmentSelect">Bộ phận</label>
+            <select id="departmentSelect"> <option value="all">Tất cả</option> </select> </div>
+        </div>
+      </div>
+      <div id="meta" class="meta"></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>🆔 Mã NV</th>
+              <th>👷 Họ tên</th>
+              <th>⚧️ Giới tính</th>
+              <th>🎂 Ngày sinh</th>
+              <th>🏬 Bộ phận</th>
+              <th>💼 Vị trí</th>
+              <th>🎖️ Cấp bậc</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div id="pagination" class="pagination"></div>
+    </div>
+  </div> <!-- DETAIL VIEW -->
+  <div id="detail-view" class="panel view hidden">
+    <div class="toolbar"> <button id="backBtn" class="back-btn">← Quay lại</button>
+      <div class="badge">👷 Hồ sơ nhân viên</div>
+    </div>
+    <div class="detail-layout">
+      <div class="profile-card"> <img id="detailAvatar" loading="lazy" class="avatar" src="" alt="Ảnh đại diện" />
+        <h3 id="detailName"></h3>
+        <p id="detailDept"></p>
+      </div>
+      <div class="info-card">
+        <h2 class="detail-title">Thông tin chi tiết</h2>
+        <div class="info-grid" id="detailInfo"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+if (window.__EMPLOYEELIST_INITED__) return;
+window.__EMPLOYEELIST_INITED__ = true;
+
+window.EmployeeListPage = (function () {
+  // ============================
+  // CONSTANTS & STATE
+  // ============================
+  var REFRESH_MS = 300000; // 5 phút
+  var PAGE_SIZE = 25;
+
+  var root = null,
+      tableBody = null,
+      pagination = null,
+      meta = null,
+      clock = null,
+      listView = null,
+      detailView = null,
+      detailAvatar = null,
+      detailName = null,
+      detailDept = null,
+      detailInfo = null,
+      backBtn = null,
+      searchInput = null,
+      departmentSelect = null;
+
+  var currentPage = 1,
+      pageSize = PAGE_SIZE,
+      employeeCache = [],
+      employeeIndex = [],
+      filteredCache = [],
+      refreshTimerId = null,
+      clockTimerId = null;
+
+  // ============================
+  // DOM QUERY
+  // ============================
+  function queryElements() {
+    root = document.querySelector('.page-employee-list');
+    if (!root) return false;
+
+    tableBody = root.querySelector('#tableBody');
+    pagination = root.querySelector('#pagination');
+    meta = root.querySelector('#meta');
+    clock = root.querySelector('#clock');
+    listView = root.querySelector('#list-view');
+    detailView = root.querySelector('#detail-view');
+    detailAvatar = root.querySelector('#detailAvatar');
+    detailName = root.querySelector('#detailName');
+    detailDept = root.querySelector('#detailDept');
+    detailInfo = root.querySelector('#detailInfo');
+    backBtn = root.querySelector('#backBtn');
+    searchInput = root.querySelector('#searchInput');
+    departmentSelect = root.querySelector('#departmentSelect');
+
+    return true;
+  }
+
+  // ============================
+  // UTILITIES
+  // ============================
+  function debounce(fn, delay) {
+    var timer = null;
+    return function () {
+      var args = Array.prototype.slice.call(arguments);
+      clearTimeout(timer);
+      timer = window.setTimeout(function () {
+        fn.apply(null, args);
+      }, delay);
+    };
+  }
+
+  function normalizeGender(value) {
+    var text = String(value || '').trim().toLowerCase();
+    if (text === 'nam' || text === 'male') return 'nam';
+    if (text === 'nữ' || text === 'nu' || text === 'female') return 'nu';
+    return '';
+  }
+
+  function escapeHtml(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function buildSearchIndex(data) {
+    employeeIndex = data.map(function (item) {
+      var ma = String(item.ma || '').trim();
+      var ten = String(item.ten || '').trim();
+      return Object.assign({}, item, {
+        maLower: ma.toLowerCase(),
+        tenLower: ten.toLowerCase(),
+        searchText: (ma + ' ' + ten).toLowerCase()
+      });
+    });
+  }
+
+  function paginateData(data, page, size) {
+    var totalPages = Math.max(1, Math.ceil(data.length / size));
+    var safePage = Math.min(Math.max(page, 1), totalPages);
+    var start = (safePage - 1) * size;
+    return {
+      pageData: data.slice(start, start + size),
+      totalPages: totalPages,
+      page: safePage,
+      total: data.length
+    };
+  }
+
+  function highlightKeyword(text, keyword) {
+    if (!keyword) return escapeHtml(text);
+    var safe = escapeHtml(text);
+    var escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return safe.replace(new RegExp('(' + escapedKeyword + ')', 'ig'), '<mark>$1</mark>');
+  }
+
+  // ============================
+  // RENDERING
+  // ============================
+  function renderRows(rows, keyword) {
+    if (!tableBody) return;
+
+    if (!rows.length) {
+      tableBody.innerHTML = '<tr><td class="empty" colspan="7">Không tìm thấy nhân viên</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = rows.map(function (item, index) {
+      var genderClass = normalizeGender(item.gioiTinh) ? 'gender-' + normalizeGender(item.gioiTinh) : '';
+      return (
+        '<tr class="' + genderClass + '" style="animation-delay:' + index * 20 + 'ms" data-ma="' + escapeHtml(item.ma) + '">' +
+        '<td>' + highlightKeyword(item.ma, keyword) + '</td>' +
+        '<td><strong>' + highlightKeyword(item.ten, keyword) + '</strong></td>' +
+        '<td>' + escapeHtml(item.gioiTinh) + '</td>' +
+        '<td>' + escapeHtml(item.ngaySinh) + '</td>' +
+        '<td>' + escapeHtml(item.boPhan) + '</td>' +
+        '<td>' + escapeHtml(item.viTri) + '</td>' +
+        '<td>' + escapeHtml(item.capBac) + '</td>' +
+        '</tr>'
+      );
+    }).join('');
+  }
+
+  function renderPagination(totalPages) {
+    if (!pagination) return;
+    if (totalPages <= 1) {
+      pagination.innerHTML = '';
+      return;
+    }
+
+    var pages = [];
+    var start = Math.max(1, currentPage - 2);
+    var end = Math.min(totalPages, start + 4);
+    for (var p = start; p <= end; p++) pages.push(p);
+
+    pagination.innerHTML =
+      '<button class="page-btn" data-page="prev" ' + (currentPage === 1 ? 'disabled' : '') + '>« Trước</button>' +
+      pages.map(function (p) {
+        return '<button class="page-btn ' + (p === currentPage ? 'active' : '') + '" data-page="' + p + '">' + p + '</button>';
+      }).join('') +
+      '<button class="page-btn" data-page="next" ' + (currentPage === totalPages ? 'disabled' : '') + '>Tiếp »</button>';
+  }
+
+  function renderDepartmentFilter(items) {
+    if (!departmentSelect) return;
+
+    var selected = departmentSelect.value || 'all';
+    var departments = items
+      .map(function (item) { return String(item.boPhan || '').trim(); })
+      .filter(Boolean)
+      .filter(function (value, index, arr) { return arr.indexOf(value) === index; })
+      .sort(function (a, b) { return a.localeCompare(b, 'vi'); });
+
+    departmentSelect.innerHTML =
+      '<option value="all">Tất cả</option>' +
+      departments.map(function (dep) {
+        return '<option value="' + escapeHtml(dep) + '">' + escapeHtml(dep) + '</option>';
+      }).join('');
+
+    if (selected !== 'all' && departments.indexOf(selected) !== -1) {
+      departmentSelect.value = selected;
+    }
+  }
+
+  function renderSkeleton(rows) {
+    rows = typeof rows === 'number' ? rows : 12;
+    if (!tableBody) return;
+
+    tableBody.innerHTML = Array.from({ length: rows }).map(function () {
+      return '<tr>' + Array.from({ length: 7 }).map(function () {
+        return '<td><div class="skeleton-cell"></div></td>';
+      }).join('') + '</tr>';
+    }).join('');
+  }
+
+  function renderEmployees(employees, preservePage) {
+    employeeCache = Array.isArray(employees) ? employees : [];
+    buildSearchIndex(employeeCache);
+    renderDepartmentFilter(employeeCache);
+
+    var oldPage = currentPage;
+    if (!preservePage) currentPage = 1;
+
+    updateView();
+
+    if (preservePage) {
+      currentPage = oldPage;
+      updateView();
+    }
+  }
+
+  function renderError(error) {
+    if (!tableBody || !meta) return;
+    var message = (error && error.message) ? error.message : 'Không thể tải dữ liệu từ Google Sheets.';
+    tableBody.innerHTML = '<tr><td class="error" colspan="7">⚠️ ' + escapeHtml(message) + '</td></tr>';
+    meta.textContent = '❌ Lỗi tải dữ liệu';
+  }
+
+  // ============================
+  // DATA HANDLING
+  // ============================
+  function updateView() {
+    if (!searchInput || !departmentSelect) return;
+
+    var keyword = searchInput.value.trim().toLowerCase();
+    var selectedDepartment = departmentSelect.value;
+
+    filteredCache = employeeIndex.filter(function (item) {
+      var matchDepartment = selectedDepartment === 'all' || String(item.boPhan || '').trim() === selectedDepartment;
+      var matchSearch = !keyword || item.searchText.indexOf(keyword) !== -1;
+      return matchDepartment && matchSearch;
+    });
+
+    var result = paginateData(filteredCache, currentPage, pageSize);
+    currentPage = result.page;
+
+    if (tableBody) tableBody.style.opacity = '0';
+    window.requestAnimationFrame(function () {
+      renderRows(result.pageData, keyword);
+      if (tableBody) tableBody.style.opacity = '1';
+    });
+
+    renderPagination(result.totalPages);
+
+    if (meta) {
+      meta.textContent = '📊 ' + result.total + '/' + employeeCache.length +
+        ' • Trang ' + currentPage + '/' + result.totalPages +
+        ' • ' + pageSize + '/trang';
+    }
+  }
+
+  function loadData(showLoading) {
+    if (showLoading) renderSkeleton();
+    API.call('getEmployees')
+      .then(function (data) { renderEmployees(data, true); })
+      .catch(renderError);
+  }
+
+  // ============================
+  // DETAIL VIEW
+  // ============================
+  function showDetailView(employee, avatarUrl) {
+    if (!detailView || !listView) return;
+
+    if (detailAvatar) detailAvatar.src = avatarUrl;
+    if (detailName) detailName.textContent = (employee.ma || '') + ' - ' + (employee.ten || '');
+    if (detailDept) detailDept.textContent = (employee.gioiTinh || '') + ' • ' + (employee.boPhan || '');
+
+    if (detailInfo) {
+      detailInfo.innerHTML = [
+        ['CCCD', employee.cccd],
+        ['BHXH', employee.bhxh],
+        ['Ngày sinh', employee.ngaySinh],
+        ['Điện thoại', employee.sdt],
+        ['Email', employee.email],
+        ['Trình độ', employee.trinhDo],
+        ['Địa chỉ', employee.diaChi],
+        ['Hôn nhân', employee.honNhan],
+        ['Trạng thái', employee.trangThai],
+        ['Thông tin thêm', employee.thongTinThem]
+      ].map(function (pair) {
+        return '<div class="info-item"><small>' + escapeHtml(pair[0]) +
+               '</small><strong>' + escapeHtml(pair[1] || '—') + '</strong></div>';
+      }).join('');
+    }
+
+    listView.classList.add('hidden');
+    detailView.classList.remove('hidden');
+    detailView.classList.remove('fade-in');
+    void detailView.offsetWidth;
+    detailView.classList.add('fade-in');
+  }
+
+  function showListView() {
+    if (!detailView || !listView) return;
+
+    detailView.classList.add('hidden');
+    listView.classList.remove('hidden');
+    listView.classList.remove('fade-in');
+    void listView.offsetWidth;
+    listView.classList.add('fade-in');
+  }
+
+  function handleRowClick(maNV) {
+    var employee = employeeCache.find(function (item) { return item.ma === maNV; });
+    if (!employee) return;
+
+    API.call('getEmployeeAvatar', maNV)
+      .then(function (avatarUrl) { showDetailView(employee, avatarUrl); })
+      .catch(function () { showDetailView(employee, 'https://via.placeholder.com/320x320.png?text=No+Avatar'); });
+  }
+
+  // ============================
+  // CLOCK
+  // ============================
+  function startClock() {
+    if (!clock) return;
+
+    function render() {
+      var now = new Date();
+      clock.textContent = '🕐 ' + now.toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    }
+
+    render();
+    clockTimerId = window.setInterval(render, 1000);
+  }
+
+  // ============================
+  // EVENTS
+  // ============================
+  function bindEvents() {
+    if (!root) return;
+
+    // Event delegation
+    root.addEventListener('click', function (event) {
+      // Row click
+      var row = event.target.closest('tr[data-ma]');
+      if (row) {
+        var maNV = row.dataset.ma || '';
+        if (maNV) handleRowClick(maNV);
+        return;
+      }
+
+      // Pagination
+      var button = event.target.closest('button[data-page]');
+      if (button) {
+        var action = button.dataset.page;
+        var totalPages = Math.max(1, Math.ceil(filteredCache.length / pageSize));
+        if (action === 'prev' && currentPage > 1) currentPage -= 1;
+        else if (action === 'next' && currentPage < totalPages) currentPage += 1;
+        else if (/^\d+$/.test(action)) currentPage = Number(action);
+        updateView();
+        return;
+      }
+
+      // Back button
+      if (event.target.closest('#backBtn')) {
+        showListView();
+        return;
+      }
+    });
+
+    // Search input
+    if (searchInput) {
+      searchInput.addEventListener('input', debounce(function () {
+        currentPage = 1;
+        updateView();
+      }, 200));
+    }
+
+    // Department select
+    if (departmentSelect) {
+      departmentSelect.addEventListener('change', function () {
+        currentPage = 1;
+        updateView();
+      });
+    }
+  }
+
+  // ============================
+  // INIT & DESTROY
+  // ============================
+  function init() {
+    if (!queryElements()) return;
+
+    destroy();
+    bindEvents();
+
+    currentPage = 1;
+    pageSize = PAGE_SIZE;
+    employeeCache = [];
+    employeeIndex = [];
+    filteredCache = [];
+
+    loadData(true);
+    startClock();
+
+    refreshTimerId = window.setInterval(function () {
+      loadData(false);
+    }, REFRESH_MS);
+  }
+
+  function destroy() {
+    if (refreshTimerId) {
+      window.clearInterval(refreshTimerId);
+      refreshTimerId = null;
+    }
+    if (clockTimerId) {
+      window.clearInterval(clockTimerId);
+      clockTimerId = null;
+    }
+  }
+
+  // ============================
+  // PUBLIC API
+  // ============================
+  return {
+    init: init,
+    destroy: destroy,
+    rebind: bindEvents
+  };
+})();
+</script>

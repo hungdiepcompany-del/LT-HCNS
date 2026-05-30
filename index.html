@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Hành chính - Nhân sự</title>
+  <style>
+    /* =============================
+         THEME TOKENS
+      ============================== */
+    :root {
+      --bg-root: #060816;
+      --bg-main: #0b1230;
+      --bg-card: #111b43;
+      --bg-card-soft: #0f1a41;
+
+      --text-primary: #eef2ff;
+      --text-secondary: #a1b0db;
+
+      --accent-blue: #4da3ff;
+      --accent-purple: #8b5cf6;
+      --accent-cyan: #20e3ff;
+
+      --ok: #1dd8a7;
+      --warn: #ffcc66;
+      --bad: #ff6b8a;
+
+      --radius-xl: 20px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+
+      --border-soft: 1px solid rgba(120, 145, 255, 0.26);
+      --shadow-soft: 0 10px 30px rgba(8, 14, 40, 0.5);
+      --shadow-glow: 0 0 0 1px rgba(124, 171, 255, 0.3), 0 14px 30px rgba(65, 133, 255, 0.24);
+
+      --sidebar-width: 260px;
+      --transition: 0.22s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text-primary);
+      background: radial-gradient(circle at 18% -8%, #1d2f73 0%, var(--bg-root) 42%), var(--bg-root);
+    }
+
+    body {
+      display: flex;
+    }
+
+    /* =============================
+         SIDEBAR
+      ============================== */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 20;
+      width: var(--sidebar-width);
+      min-height: 100vh;
+      padding: 22px 16px;
+      border-right: var(--border-soft);
+      background: linear-gradient(180deg, rgba(11, 18, 48, 0.95), rgba(7, 12, 35, 0.96));
+      box-shadow: 14px 0 30px rgba(7, 10, 28, 0.42);
+      backdrop-filter: blur(7px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding: 10px 12px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(125deg, rgba(77, 163, 255, 0.14), rgba(139, 92, 246, 0.18));
+      border: 1px solid rgba(127, 153, 245, 0.4);
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      color: #fff;
+      box-shadow: 0 7px 16px rgba(84, 114, 255, 0.42);
+    }
+
+    .brand-title {
+      font-size: 1.07rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .menu-caption {
+      margin: 8px 10px 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.77rem;
+      letter-spacing: 1px;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .menu-item {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      background: rgba(19, 29, 72, 0.35);
+      font-size: 0.95rem;
+      font-weight: 550;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), color var(--transition);
+    }
+
+    .menu-item:hover {
+      color: var(--text-primary);
+      transform: translateX(4px) scale(1.01);
+      border-color: rgba(112, 180, 255, 0.45);
+      box-shadow: 0 10px 22px rgba(33, 61, 150, 0.36), 0 0 22px rgba(32, 227, 255, 0.12);
+    }
+
+    .menu-item.active {
+      color: #fff;
+      border-color: rgba(135, 183, 255, 0.58);
+      background: linear-gradient(120deg, rgba(77, 163, 255, 0.2), rgba(139, 92, 246, 0.2));
+      box-shadow: var(--shadow-glow);
+    }
+
+    /* nav dot */
+    .menu-item .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      /* faint by default */
+      margin-right: 10px;
+      transform: scale(0.6);
+      opacity: 0.22;
+      transition: background-color 260ms ease, transform 260ms ease, opacity 260ms ease, box-shadow 260ms ease;
+      will-change: transform, opacity;
+    }
+
+    /* fully hidden alternative (use if you want dot removed instead of dim) */
+    /* .menu-item .dot { opacity:0; transform:scale(0.5); } */
+
+    /* active nav item: neon green dot with glow */
+    .menu-item.active .dot {
+      background: linear-gradient(180deg, #7CFF57, #3EDB2A);
+      box-shadow: 0 0 8px rgba(124, 255, 87, 0.6), 0 0 20px rgba(62, 219, 42, 0.14);
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* =============================
+         APP WRAPPER + HEADER
+      ============================== */
+    .app {
+      margin-left: var(--sidebar-width);
+      width: calc(100% - var(--sidebar-width));
+      padding: 24px 28px 34px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .header-title {
+      margin: 0;
+      font-size: clamp(1.3rem, 2.1vw, 1.9rem);
+    }
+
+    .header-tools {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search {
+      width: min(380px, 46vw);
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(114, 145, 255, 0.32);
+      background: rgba(17, 27, 67, 0.72);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .search input {
+      border: none;
+      background: transparent;
+      width: 100%;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 0.92rem;
+    }
+
+    .search input::placeholder {
+      color: #8394bf;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+      border: 1px solid rgba(187, 197, 255, 0.3);
+      box-shadow: 0 10px 20px rgba(82, 109, 231, 0.45);
+    }
+
+    /* =============================
+         COMMON CARD
+      ============================== */
+    .card {
+      border-radius: var(--radius-xl);
+      border: var(--border-soft);
+      background: linear-gradient(160deg, rgba(17, 27, 67, 0.88), rgba(11, 18, 48, 0.97));
+      box-shadow: var(--shadow-soft);
+    }
+
+    /* =============================
+         KPI GRID
+      ============================== */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .kpi-card {
+      padding: 16px;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px) scale(1.01);
+      border-color: rgba(120, 191, 255, 0.5);
+      box-shadow: 0 16px 30px rgba(9, 18, 51, 0.65), 0 0 26px rgba(79, 133, 255, 0.19);
+    }
+
+    .kpi-label {
+      margin-bottom: 8px;
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+    }
+
+    .kpi-number {
+      margin-bottom: 8px;
+      font-size: 1.66rem;
+      font-weight: 750;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.8rem;
+    }
+
+    .chip.pos {
+      background: rgba(29, 216, 167, 0.14);
+      color: var(--ok);
+    }
+
+    .chip.neu {
+      background: rgba(77, 163, 255, 0.14);
+      color: #7ec4ff;
+    }
+
+    .chip.neg {
+      background: rgba(255, 107, 138, 0.14);
+      color: var(--bad);
+    }
+
+    /* =============================
+         MAIN GRID
+      ============================== */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 16px;
+    }
+
+    .panel+.panel {
+      margin-top: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .panel-meta {
+      color: var(--text-secondary);
+      font-size: 0.84rem;
+    }
+
+    /* =============================
+         CHART BLOCKS
+      ============================== */
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .chart-card {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(92, 117, 208, 0.35);
+      background: rgba(10, 18, 50, 0.74);
+      padding: 14px;
+    }
+
+    .chart-title {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+    }
+
+    .dept-bars {
+      display: grid;
+      gap: 10px;
+    }
+
+    .dept-row {
+      display: grid;
+      grid-template-columns: 86px 1fr 34px;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.84rem;
+    }
+
+    .track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(90, 104, 156, 0.25);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+      box-shadow: 0 0 18px rgba(92, 154, 255, 0.4);
+    }
+
+    .line-chart {
+      width: 100%;
+      height: 180px;
+      display: block;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(23, 37, 90, 0.35), rgba(14, 22, 55, 0.15));
+    }
+
+    .muted {
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+    }
+
+    /* =============================
+         QUICK TABLE
+      ============================== */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 11px 10px;
+      border-bottom: 1px solid rgba(109, 130, 201, 0.2);
+    }
+
+    th {
+      font-weight: 600;
+      color: #9fb2ea;
+    }
+
+    tbody tr {
+      transition: background var(--transition);
+    }
+
+    tbody tr:hover {
+      background: rgba(72, 108, 226, 0.14);
+    }
+
+    .badge-new {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 99px;
+      font-size: 0.74rem;
+      background: rgba(29, 216, 167, 0.12);
+      color: #7af3d5;
+    }
+
+    /* =============================
+         BIRTHDAY TIMELINE
+      ============================== */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 10px;
+    }
+
+    .timeline-date {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-weight: 650;
+      color: #fff;
+      background: linear-gradient(145deg, rgba(77, 163, 255, 0.9), rgba(139, 92, 246, 0.9));
+      box-shadow: 0 6px 16px rgba(80, 105, 220, 0.4);
+    }
+
+    .timeline-content {
+      border-radius: 12px;
+      border: 1px solid rgba(110, 133, 227, 0.24);
+      background: rgba(14, 23, 58, 0.72);
+      padding: 10px 12px;
+    }
+
+    .timeline-content strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* =============================
+         RESPONSIVE
+      ============================== */
+    @media (max-width: 1200px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 860px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        position: static;
+        width: 100%;
+        min-height: auto;
+        border-right: none;
+        border-bottom: var(--border-soft);
+      }
+
+      .app {
+        margin-left: 0;
+        width: 100%;
+        padding: 18px 16px 26px;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .search {
+        width: 100%;
+      }
+
+      .charts {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- =============================
+         SIDEBAR
+    ============================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">HR</div>
+      <div class="brand-title">HR Admin</div>
+    </div>
+
+    <div class="menu-caption">Navigation</div>
+    <nav class="menu" id="sidebarMenu" aria-label="Sidebar menu">
+      <button class="menu-item active" type="button" data-page="dashboard" aria-current="page">
+          <span class="dot"></span>
+          Tổng quan
+        </button>
+      <button class="menu-item" type="button" data-page="employee-list">
+          <span class="dot"></span>
+          Danh sách nhân sự
+        </button>
+      <button class="menu-item" type="button" data-page="birthdays">
+          <span class="dot"></span>
+          Sinh nhật
+        </button>
+    </nav>
+  </aside>
+
+  <!-- =============================
+         MAIN APP
+    ============================== -->
+  <main class="app">
+    <div id="mainContent">
+      <!-- HEADER -->
+      <header class="header">
+        <h1 class="header-title">Hành chính - Nhân sự</h1>
+
+        <div class="header-tools">
+          <label class="search" aria-label="Tìm kiếm nhân sự">
+            <span>🔎</span>
+            <input type="text" placeholder="Tìm nhân sự, phòng ban, mã NV..." />
+          </label>
+          <div class="avatar" title="Admin User">AD</div>
+        </div>
+      </header>
+
+      <!-- KPI CARDS -->
+      <section class="kpi-grid" aria-label="KPI tổng quan">
+        <article class="card kpi-card">
+          <div class="kpi-label">Tổng nhân sự</div>
+          <div class="kpi-number">268</div>
+          <span class="chip pos">▲ +8.4% tháng này</span>
+        </article>
+
+        <article class="card kpi-card">
+          <div class="kpi-label">Nhân sự mới</div>
+          <div class="kpi-number">19</div>
+          <span class="chip pos">▲ +3 so với tháng trước</span>
+        </article>
+
+        <article class="card kpi-card">
+          <div class="kpi-label">Sinh nhật hôm nay</div>
+          <div class="kpi-number">4</div>
+          <span class="chip neu">• Cần chuẩn bị chúc mừng</span>
+        </article>
+
+        <article class="card kpi-card">
+          <div class="kpi-label">Nghỉ việc</div>
+          <div class="kpi-number">2</div>
+          <span class="chip neg">▼ -1 so với tháng trước</span>
+        </article>
+      </section>
+
+      <section class="main-grid">
+        <div>
+          <!-- CHARTS -->
+          <article class="card panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Phân tích nhân sự</h2>
+              <span class="panel-meta">Cập nhật: thời gian thực (demo)</span>
+            </div>
+
+            <div class="charts">
+              <div class="chart-card">
+                <h3 class="chart-title">Nhân sự theo phòng ban</h3>
+                <div class="dept-bars">
+                  <div class="dept-row">
+                    <span>Kinh doanh</span>
+                    <div class="track">
+                      <div class="fill" style="width: 82%"></div>
+                    </div>
+                    <strong>82</strong>
+                  </div>
+                  <div class="dept-row">
+                    <span>Kỹ thuật</span>
+                    <div class="track">
+                      <div class="fill" style="width: 74%"></div>
+                    </div>
+                    <strong>74</strong>
+                  </div>
+                  <div class="dept-row">
+                    <span>Vận hành</span>
+                    <div class="track">
+                      <div class="fill" style="width: 61%"></div>
+                    </div>
+                    <strong>61</strong>
+                  </div>
+                  <div class="dept-row">
+                    <span>Tài chính</span>
+                    <div class="track">
+                      <div class="fill" style="width: 28%"></div>
+                    </div>
+                    <strong>28</strong>
+                  </div>
+                  <div class="dept-row">
+                    <span>Hành chính</span>
+                    <div class="track">
+                      <div class="fill" style="width: 23%"></div>
+                    </div>
+                    <strong>23</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <h3 class="chart-title">Trend tăng trưởng</h3>
+                <canvas id="trendChart" class="line-chart" width="420" height="180"></canvas>
+                <div class="muted" style="margin-top: 8px">Biến động tăng trưởng 6 tháng gần nhất</div>
+              </div>
+            </div>
+          </article>
+
+          <!-- QUICK TABLE -->
+          <article class="card panel">
+            <div class="panel-head">
+              <h2 class="panel-title">5 nhân sự gần nhất</h2>
+              <span class="panel-meta">Onboarding gần đây</span>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Họ tên</th>
+                    <th>Phòng ban</th>
+                    <th>Ngày vào</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Nguyễn Minh Khoa</td>
+                    <td>Kỹ thuật</td>
+                    <td>03/04/2026</td>
+                    <td><span class="badge-new">● Mới</span></td>
+                  </tr>
+                  <tr>
+                    <td>Trần Diệu Linh</td>
+                    <td>Kinh doanh</td>
+                    <td>01/04/2026</td>
+                    <td><span class="badge-new">● Mới</span></td>
+                  </tr>
+                  <tr>
+                    <td>Phạm Quốc Huy</td>
+                    <td>Vận hành</td>
+                    <td>29/03/2026</td>
+                    <td><span class="badge-new">● Mới</span></td>
+                  </tr>
+                  <tr>
+                    <td>Lê Ngọc An</td>
+                    <td>Tài chính</td>
+                    <td>26/03/2026</td>
+                    <td><span class="badge-new">● Mới</span></td>
+                  </tr>
+                  <tr>
+                    <td>Đỗ Thu Trang</td>
+                    <td>Hành chính</td>
+                    <td>24/03/2026</td>
+                    <td><span class="badge-new">● Mới</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
+        <!-- TIMELINE -->
+        <aside>
+          <article class="card panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Timeline sinh nhật sắp tới</h2>
+              <span class="panel-meta">7 ngày tới</span>
+            </div>
+
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-date">06</div>
+                <div class="timeline-content">
+                  <strong>Võ Hải Yến</strong>
+                  <div class="muted">Phòng Kinh doanh • 06/04</div>
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-date">07</div>
+                <div class="timeline-content">
+                  <strong>Nguyễn Tấn Lộc</strong>
+                  <div class="muted">Phòng Kỹ thuật • 07/04</div>
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-date">09</div>
+                <div class="timeline-content">
+                  <strong>Phan Bảo Châu</strong>
+                  <div class="muted">Phòng Vận hành • 09/04</div>
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-date">11</div>
+                <div class="timeline-content">
+                  <strong>Lý Gia Hân</strong>
+                  <div class="muted">Phòng Hành chính • 11/04</div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </aside>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+        var pageTitle = document.querySelector('.header-title');
+        var mainContent = document.getElementById('mainContent');
+        var menuRoot = document.getElementById('sidebarMenu');
+        var menuItems = menuRoot ? Array.from(menuRoot.querySelectorAll('.menu-item')) : [];
+        var currentRoute = 'dashboard';
+        var dashboardHtml = mainContent ? mainContent.innerHTML : '';
+
+        function setActive(page) {
+          menuItems.forEach(function (item) {
+            var isActive = item.getAttribute('data-page') === page;
+            item.classList.toggle('active', isActive);
+            if (isActive) item.setAttribute('aria-current', 'page');
+            else item.removeAttribute('aria-current');
+          });
+        }
+
+        function renderDashboard() {
+          if (!mainContent) return;
+          mainContent.innerHTML = dashboardHtml;
+          DashboardPage.init();
+        }
+
+        function renderEmployeeList() {
+          if (!mainContent) return;
+          mainContent.innerHTML = '<article class="card panel"><div class="panel-head"><h2 class="panel-title">Danh sách nhân sự</h2></div><div style="padding:24px;color:#a1b0db;">Đang tải...</div></article>';
+          // google.script.run.withSuccessHandler(function (html) {
+          //   mainContent.innerHTML = html;
+          //   EmployeeListPage.init();
+          // }).withFailureHandler(function () {
+          //   mainContent.innerHTML = '<article class="card panel"><div class="panel-head"><h2 class="panel-title">Lỗi</h2></div><div style="padding:24px;color:#f8d7da;">Không thể tải nội dung danh sách nhân sự.</div></article>';
+          // }).getPage('page_employee_list');
+          
+          google.script.run.withSuccessHandler(function (html) {
+            mainContent.innerHTML = html;
+
+            setTimeout(function () {
+              EmployeeListPage.init();
+            }, 0);
+
+          }).getPage('page_employee_list');
+        }
+
+      
+        function renderBirthdayPage() {
+          if (!mainContent) return;
+          mainContent.innerHTML = '<article class="card panel"><div class="panel-head"><h2 class="panel-title">Sinh nhật</h2></div><div style="padding:24px;color:#a1b0db;">Đang tải, vui lòng đợi...</div></article>';
+          google.script.run.withSuccessHandler(function (html) {
+            mainContent.innerHTML = html;
+            BirthdayPage.init();
+          }).withFailureHandler(function () {
+            mainContent.innerHTML = '<article class="card panel"><div class="panel-head"><h2 class="panel-title">Lỗi</h2></div><div style="padding:24px;color:#f8d7da;">Không thể tải nội dung Sinh nhật.</div></article>';
+          }).getPage('page_employee_birth');
+        }
+
+        function navigate(route, updateHash) {
+          if (!route || !ROUTES[route]) {
+            route = 'dashboard';
+          }
+          if (currentRoute !== route && ROUTES[currentRoute] && typeof ROUTES[currentRoute].leave === 'function') {
+            ROUTES[currentRoute].leave();
+          }
+          currentRoute = route;
+          setActive(route);
+          if (pageTitle) pageTitle.textContent = ROUTES[route].title;
+          ROUTES[route].render();
+          if (updateHash !== false) {
+            window.location.hash = route;
+          }
+        }
+
+        function handleMenuClick(event) {
+          var button = event.currentTarget;
+          var page = button.getAttribute('data-page');
+          navigate(page, true);
+        }
+
+        menuItems.forEach(function (item) {
+          item.addEventListener('click', handleMenuClick);
+        });
+
+        window.addEventListener('hashchange', function () {
+          navigate(window.location.hash.slice(1), false);
+        });
+
+        var ROUTES = {
+          dashboard: {
+            title: 'Dashboard',
+            render: renderDashboard
+          },
+          'employee-list': {
+            title: 'Danh sách nhân sự',
+            render: renderEmployeeList,
+            leave: function () { EmployeeListPage.destroy(); }
+          },
+          birthdays: {
+            title: 'Sinh nhật',
+            render: renderBirthdayPage,
+            leave: function () { BirthdayPage.destroy(); }
+          }
+        };
+
+        var DashboardPage = (function () {
+          function init() {
+            var canvas = document.getElementById('trendChart');
+            if (!canvas || !canvas.getContext) return;
+            var ctx = canvas.getContext('2d');
+            var points = [126, 138, 149, 167, 182, 198];
+            var labels = ['T11', 'T12', 'T01', 'T02', 'T03', 'T04'];
+            var maxVal = Math.max.apply(null, points) + 10;
+            var minVal = Math.min.apply(null, points) - 12;
+            var pad = { top: 18, right: 20, bottom: 28, left: 26 };
+            var chartW = canvas.width - pad.left - pad.right;
+            var chartH = canvas.height - pad.top - pad.bottom;
+
+            function xAt(index) { return pad.left + (chartW / (points.length - 1)) * index; }
+            function yAt(value) { return pad.top + ((maxVal - value) / (maxVal - minVal)) * chartH; }
+
+            var lineGrad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            lineGrad.addColorStop(0, '#4da3ff');
+            lineGrad.addColorStop(1, '#8b5cf6');
+
+            var areaGrad = ctx.createLinearGradient(0, pad.top, 0, canvas.height);
+            areaGrad.addColorStop(0, 'rgba(77, 163, 255, 0.28)');
+            areaGrad.addColorStop(1, 'rgba(77, 163, 255, 0.02)');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(133, 155, 230, 0.22)';
+            ctx.lineWidth = 1;
+
+            for (var i = 0; i <= 4; i++) {
+              var gy = pad.top + (chartH / 4) * i;
+              ctx.beginPath();
+              ctx.moveTo(pad.left, gy);
+              ctx.lineTo(canvas.width - pad.right, gy);
+              ctx.stroke();
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(xAt(0), yAt(points[0]));
+            for (var p = 1; p < points.length; p++) {
+              var x = xAt(p);
+              var y = yAt(points[p]);
+              var px = xAt(p - 1);
+              var py = yAt(points[p - 1]);
+              var cx = (px + x) / 2;
+              ctx.bezierCurveTo(cx, py, cx, y, x, y);
+            }
+
+            ctx.strokeStyle = lineGrad;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.lineTo(xAt(points.length - 1), canvas.height - pad.bottom);
+            ctx.lineTo(xAt(0), canvas.height - pad.bottom);
+            ctx.closePath();
+            ctx.fillStyle = areaGrad;
+            ctx.fill();
+
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillStyle = '#93a5d8';
+            labels.forEach(function (label, idx) {
+              ctx.fillText(label, xAt(idx) - 10, canvas.height - 9);
+            });
+
+            points.forEach(function (value, idx) {
+              var px = xAt(idx);
+              var py = yAt(value);
+              ctx.beginPath();
+              ctx.arc(px, py, 4, 0, Math.PI * 2);
+              ctx.fillStyle = '#8fd2ff';
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(px, py, 2, 0, Math.PI * 2);
+              ctx.fillStyle = '#ffffff';
+              ctx.fill();
+            });
+          }
+
+          return { init: init };
+        })();
+
+        var BirthdayPage = (function () {
+          var root = null;
+          var groupsEl = null;
+          var loadingEl = null;
+          var errorEl = null;
+          var confettiCanvas = null;
+          var confettiCtx = null;
+          var currentMonth = new Date().getMonth() + 1;
+          var loadingMonths = new Set();
+          var loadedMonths = new Set();
+          var loadQueue = [];
+          var isProcessingQueue = false;
+          var rafId = null;
+          var resizeHandler = null;
+          var scrollHandler = null;
+          var confettiParticles = [];
+          var confettiRunning = false;
+          var lastScrollTop = 0;
+
+          function queryElements() {
+            root = document.querySelector('.page-birthday');
+            if (!root) return false;
+            groupsEl = root.querySelector('#groups');
+            loadingEl = root.querySelector('#loading');
+            errorEl = root.querySelector('#errorBox');
+            confettiCanvas = root.querySelector('#confetti');
+            confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
+            return !!groupsEl && !!loadingEl && !!errorEl && !!confettiCanvas && !!confettiCtx;
+          }
+
+          function debounce(fn, delay) {
+            var timer = null;
+            return function () {
+              var args = Array.prototype.slice.call(arguments);
+              clearTimeout(timer);
+              timer = window.setTimeout(function () {
+                fn.apply(null, args);
+              }, delay);
+            };
+          }
+
+          function escapeHtml(text) {
+            return String(text || '')
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#039;');
+          }
+
+          function toggleLoading(show) {
+            if (loadingEl) {
+              loadingEl.style.display = show ? 'block' : 'none';
+            }
+          }
+
+          function showError(message) {
+            if (!errorEl) return;
+            if (!message) {
+              errorEl.style.display = 'none';
+              errorEl.textContent = '';
+              return;
+            }
+            errorEl.style.display = 'block';
+            errorEl.textContent = message;
+          }
+
+          function enqueueLoad(month, direction) {
+            if (month < 1 || month > 12 || loadedMonths.has(month) || loadingMonths.has(month)) return;
+            if (loadQueue.some(function (job) { return job.month === month; })) return;
+            loadingMonths.add(month);
+            loadQueue.push({ month: month, direction: direction });
+            processQueue();
+          }
+
+          function processQueue() {
+            if (isProcessingQueue || !loadQueue.length) return;
+            var job = loadQueue.shift();
+            if (!job) return;
+            isProcessingQueue = true;
+            toggleLoading(true);
+            google.script.run
+              .withSuccessHandler(function (res) {
+                if (res && res.success) {
+                  loadedMonths.add(job.month);
+                  renderMonth(job.month, res.employees || [], job.direction);
+                  showError('');
+                } else {
+                  showError(res && res.message ? res.message : 'Không có dữ liệu cho tháng này.');
+                }
+                loadingMonths.delete(job.month);
+                isProcessingQueue = false;
+                toggleLoading(false);
+                processQueue();
+                update3DNodes();
+              })
+              .withFailureHandler(function () {
+                loadingMonths.delete(job.month);
+                isProcessingQueue = false;
+                toggleLoading(false);
+                showError('Không thể tải dữ liệu từ server.');
+                processQueue();
+              })
+              .getEmployeesByMonth(job.month);
+          }
+
+          function renderMonth(month, employees, direction) {
+            if (!groupsEl) return;
+            var section = document.createElement('section');
+            section.className = 'month-group';
+            var title = document.createElement('h2');
+            title.className = 'month-title';
+            title.textContent = 'Tháng ' + month;
+            var list = document.createElement('div');
+            list.className = 'nodes';
+
+            if (!employees.length) {
+              var empty = document.createElement('div');
+              empty.className = 'empty';
+              empty.textContent = 'Không có nhân sự trong tháng này.';
+              list.appendChild(empty);
+            } else {
+              employees.forEach(function (emp, index) {
+                var node = document.createElement('article');
+                node.className = 'node ' + (index % 2 === 0 ? 'left' : 'right');
+                node.innerHTML =
+                  '<div class="node-inner">' +
+                    '<div class="node-avatar">' +
+                      (emp.avatar
+                        ? '<img src="' + escapeHtml(emp.avatar) + '" alt="avatar" loading="lazy" class="avatar-img" />'
+                        : '<div class="avatar-fallback">' + escapeHtml((emp.employeeName || 'A').charAt(0).toUpperCase()) + '</div>') +
+                      '<div class="emp-meta"><span class="emp-id">' + escapeHtml(emp.employeeCode || '') + '</span> <span class="emp-gender">' + (emp.gender === 'Nam' ? '👨' : emp.gender === 'Nữ' ? '👩' : '👤') + '</span></div>' +
+                    '</div>' +
+                    '<div class="node-info">' +
+                      '<div class="name">' + escapeHtml(emp.employeeName || '') + '</div>' +
+                      '<div class="birth">🎂 ' + escapeHtml(emp.birthDate || '') + '</div>' +
+                      '<div class="department">🏢 ' + escapeHtml(emp.employeeDepartment || '') + '</div>' +
+                    '</div>' +
+                  '</div>';
+
+                node.addEventListener('mouseenter', function (e) {
+                  spawnSparkles(node, 6);
+                  blastConfetti(e.clientX, e.clientY, 16);
+                });
+                list.appendChild(node);
+              });
+            }
+
+            section.appendChild(title);
+            section.appendChild(list);
+            if (direction === 'prepend') {
+              var previousHeight = groupsEl.scrollHeight;
+              groupsEl.prepend(section);
+              var newHeight = groupsEl.scrollHeight;
+              window.scrollBy(0, newHeight - previousHeight);
+            } else {
+              groupsEl.appendChild(section);
+            }
+            initLazyImages();
+          }
+
+          function update3DNodes() {
+            if (!groupsEl) return;
+            var nodes = document.querySelectorAll('.page-birthday .node');
+            var centerY = window.innerHeight * 0.5;
+            nodes.forEach(function (node) {
+              var rect = node.getBoundingClientRect();
+              var nodeCenter = rect.top + rect.height * 0.5;
+              var dist = Math.abs(centerY - nodeCenter);
+              var norm = Math.min(dist / (window.innerHeight * 0.7), 1);
+              var depth = (1 - norm) * 85;
+              var scale = 0.86 + (1 - norm) * 0.24;
+              var opacity = 0.35 + (1 - norm) * 0.65;
+              var blur = norm * 1.8;
+              var isLeft = node.classList.contains('left');
+              var baseRotate = isLeft ? -12 : 12;
+              var rotateY = baseRotate * norm;
+              node.style.transform = 'translateZ(' + depth.toFixed(1) + 'px) scale(' + scale.toFixed(3) + ') rotateY(' + rotateY.toFixed(2) + 'deg)';
+              node.style.opacity = opacity.toFixed(3);
+              var inner = node.querySelector('.node-inner');
+              if (inner) {
+                inner.style.filter = 'blur(' + blur.toFixed(2) + 'px)';
+              }
+            });
+            rafId = window.requestAnimationFrame(update3DNodes);
+          }
+
+          function spawnSparkles(parent, count) {
+            for (var i = 0; i < count; i += 1) {
+              var dot = document.createElement('span');
+              dot.className = 'sparkle';
+              dot.style.left = 12 + Math.random() * (parent.clientWidth - 24) + 'px';
+              dot.style.top = 16 + Math.random() * (parent.clientHeight - 20) + 'px';
+              parent.appendChild(dot);
+              setTimeout(function () { dot.remove(); }, 900);
+            }
+          }
+
+          function blastConfetti(x, y, amount) {
+            if (!confettiCtx) return;
+            for (var i = 0; i < amount; i += 1) {
+              confettiParticles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 4.8,
+                vy: -1.5 - Math.random() * 3.6,
+                life: 36 + Math.random() * 20,
+                size: 2 + Math.random() * 3,
+                color: ['#7b61ff', '#39d0ff', '#9fffcf', '#ffd166', '#ff7aa2'][Math.floor(Math.random() * 5)]
+              });
+            }
+            if (!confettiRunning) {
+              confettiRunning = true;
+              requestAnimationFrame(runConfetti);
+            }
+          }
+
+          function runConfetti() {
+            if (!confettiCtx || !confettiCanvas) return;
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiParticles = confettiParticles.filter(function (p) { return p.life > 0; });
+            confettiParticles.forEach(function (p) {
+              p.vy += 0.09;
+              p.x += p.vx;
+              p.y += p.vy;
+              p.life -= 1;
+              confettiCtx.globalAlpha = Math.max(p.life / 60, 0);
+              confettiCtx.fillStyle = p.color;
+              confettiCtx.fillRect(p.x, p.y, p.size, p.size * 1.35);
+            });
+            if (confettiParticles.length > 0) {
+              requestAnimationFrame(runConfetti);
+            } else {
+              confettiRunning = false;
+              confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            }
+          }
+
+          function resizeCanvas() {
+            if (!confettiCanvas) return;
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+          }
+
+          function onScroll() {
+            if (!rafId) {
+              rafId = window.requestAnimationFrame(function () { update3DNodes(); rafId = null; });
+            }
+            var scrollTop = window.scrollY;
+            var nearBottom = document.documentElement.scrollHeight - (window.innerHeight + scrollTop) < 200;
+            var nearTop = scrollTop < 200;
+            if (scrollTop > lastScrollTop && nearBottom) {
+              currentMonth += 1;
+              enqueueLoad(currentMonth, 'append');
+            }
+            if (scrollTop < lastScrollTop && nearTop) {
+              currentMonth -= 1;
+              enqueueLoad(currentMonth, 'prepend');
+            }
+            lastScrollTop = scrollTop;
+          }
+
+          function initLazyImages() {
+            var images = document.querySelectorAll('.lazy-img');
+            Array.prototype.forEach.call(images, function (img) {
+              if ('IntersectionObserver' in window) {
+                var observer = new IntersectionObserver(function (entries) {
+                  entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                      var target = entry.target;
+                      target.src = target.dataset.src;
+                      target.onload = function () { target.classList.add('loaded'); };
+                      observer.unobserve(target);
+                    }
+                  });
+                }, { rootMargin: '120px' });
+                observer.observe(img);
+              } else {
+                img.src = img.dataset.src;
+              }
+            });
+          }
+
+          function bindEvents() {
+            resizeHandler = resizeCanvas;
+            scrollHandler = debounce(onScroll, 80);
+            window.addEventListener('resize', resizeHandler);
+            window.addEventListener('scroll', scrollHandler, { passive: true });
+          }
+
+          function unbindEvents() {
+            if (resizeHandler) {
+              window.removeEventListener('resize', resizeHandler);
+              resizeHandler = null;
+            }
+            if (scrollHandler) {
+              window.removeEventListener('scroll', scrollHandler, { passive: true });
+              scrollHandler = null;
+            }
+          }
+
+          function init() {
+            if (!queryElements()) return;
+            loadedMonths.clear();
+            loadingMonths.clear();
+            loadQueue = [];
+            toggleLoading(false);
+            showError('');
+            groupsEl.innerHTML = '';
+            resizeCanvas();
+            bindEvents();
+            enqueueLoad(currentMonth, 'append');
+            setTimeout(function () { enqueueLoad(currentMonth - 1, 'prepend'); }, 300);
+            setTimeout(function () { enqueueLoad(currentMonth + 1, 'append'); }, 600);
+            update3DNodes();
+          }
+
+          function destroy() {
+            unbindEvents();
+            if (rafId) {
+              cancelAnimationFrame(rafId);
+              rafId = null;
+            }
+            if (confettiParticles.length) {
+              confettiParticles = [];
+            }
+          }
+
+          return { init: init, destroy: destroy };
+        })();
+
+        var EmployeeListPage = (function () {
+          var REFRESH_MS = 300000;
+          var PAGE_SIZE = 25;
+          var root = null;
+          var tableBody = null;
+          var pagination = null;
+          var meta = null;
+          var clock = null;
+          var listView = null;
+          var detailView = null;
+          var detailAvatar = null;
+          var detailName = null;
+          var detailDept = null;
+          var detailInfo = null;
+          var backBtn = null;
+          var searchInput = null;
+          var departmentSelect = null;
+          var currentPage = 1;
+          var pageSize = PAGE_SIZE;
+          var employeeCache = [];
+          var employeeIndex = [];
+          var filteredCache = [];
+          var refreshTimerId = null;
+          var clockTimerId = null;
+
+          function queryElements() {
+            root = document.querySelector('.page-employee-list');
+            if (!root) return false;
+            tableBody = root.querySelector('#tableBody');
+            pagination = root.querySelector('#pagination');
+            meta = root.querySelector('#meta');
+            clock = root.querySelector('#clock');
+            listView = root.querySelector('#list-view');
+            detailView = root.querySelector('#detail-view');
+            detailAvatar = root.querySelector('#detailAvatar');
+            detailName = root.querySelector('#detailName');
+            detailDept = root.querySelector('#detailDept');
+            detailInfo = root.querySelector('#detailInfo');
+            backBtn = root.querySelector('#backBtn');
+            searchInput = root.querySelector('#searchInput');
+            departmentSelect = root.querySelector('#departmentSelect');
+            return true;
+          }
+
+          function debounce(fn, delay) {
+            var timer = null;
+            return function () {
+              var args = Array.prototype.slice.call(arguments);
+              clearTimeout(timer);
+              timer = window.setTimeout(function () {
+                fn.apply(null, args);
+              }, delay);
+            };
+          }
+
+          function normalizeGender(value) {
+            var text = String(value || '').trim().toLowerCase();
+            if (text === 'nam' || text === 'male') return 'nam';
+            if (text === 'nữ' || text === 'nu' || text === 'female') return 'nu';
+            return '';
+          }
+
+          function escapeHtml(text) {
+            return String(text || '')
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;')
+              .replaceAll('"', '&quot;')
+              .replaceAll("'", '&#039;');
+          }
+
+          function buildSearchIndex(data) {
+            employeeIndex = data.map(function (item) {
+              var ma = String(item.ma || '').trim();
+              var ten = String(item.ten || '').trim();
+              return Object.assign({}, item, {
+                maLower: ma.toLowerCase(),
+                tenLower: ten.toLowerCase(),
+                searchText: (ma + ' ' + ten).toLowerCase()
+              });
+            });
+          }
+
+          function paginateData(data, page, size) {
+            var totalPages = Math.max(1, Math.ceil(data.length / size));
+            var safePage = Math.min(Math.max(page, 1), totalPages);
+            var start = (safePage - 1) * size;
+            return {
+              pageData: data.slice(start, start + size),
+              totalPages: totalPages,
+              page: safePage,
+              total: data.length
+            };
+          }
+
+          function renderPagination(totalPages) {
+            if (!pagination) return;
+            if (totalPages <= 1) {
+              pagination.innerHTML = '';
+              return;
+            }
+            var pages = [];
+            var start = Math.max(1, currentPage - 2);
+            var end = Math.min(totalPages, start + 4);
+            for (var p = start; p <= end; p += 1) {
+              pages.push(p);
+            }
+            pagination.innerHTML =
+              '<button class="page-btn" data-page="prev" ' + (currentPage === 1 ? 'disabled' : '') + '>« Prev</button>' +
+              pages.map(function (p) {
+                return '<button class="page-btn ' + (p === currentPage ? 'active' : '') + '" data-page="' + p + '">' + p + '</button>';
+              }).join('') +
+              '<button class="page-btn" data-page="next" ' + (currentPage === totalPages ? 'disabled' : '') + '>Next »</button>';
+          }
+
+          function highlightKeyword(text, keyword) {
+            if (!keyword) return escapeHtml(text);
+            var safe = escapeHtml(text);
+            var escapedKeyword = keyword.replace(/[.*+?^${}()|[\\]\\]/g, '\\\\$&');
+            return safe.replace(new RegExp('(' + escapedKeyword + ')', 'ig'), '<mark>$1</mark>');
+          }
+
+          function renderRows(rows, keyword) {
+            if (!tableBody) return;
+            if (!rows.length) {
+              tableBody.innerHTML = '<tr><td class="empty" colspan="7">Không tìm thấy nhân viên</td></tr>';
+              return;
+            }
+            tableBody.innerHTML = rows.map(function (item, index) {
+              var genderClass = normalizeGender(item.gioiTinh) ? 'gender-' + normalizeGender(item.gioiTinh) : '';
+              return (
+                '<tr class="' + genderClass + '" style="animation-delay:' + index * 18 + 'ms" data-ma="' + escapeHtml(item.ma) + '">' +
+                '<td>' + highlightKeyword(item.ma, keyword) + '</td>' +
+                '<td><strong>' + highlightKeyword(item.ten, keyword) + '</strong></td>' +
+                '<td>' + escapeHtml(item.gioiTinh) + '</td>' +
+                '<td>' + escapeHtml(item.ngaySinh) + '</td>' +
+                '<td>' + escapeHtml(item.boPhan) + '</td>' +
+                '<td>' + escapeHtml(item.viTri) + '</td>' +
+                '<td>' + escapeHtml(item.capBac) + '</td>' +
+                '</tr>'
+              );
+            }).join('');
+          }
+
+          function renderDepartmentFilter(items) {
+            if (!departmentSelect) return;
+            var selected = departmentSelect.value || 'all';
+            var departments = items
+              .map(function (item) { return String(item.boPhan || '').trim(); })
+              .filter(function (value) { return Boolean(value); })
+              .filter(function (value, index, arr) { return arr.indexOf(value) === index; })
+              .sort(function (a, b) { return a.localeCompare(b, 'vi'); });
+            departmentSelect.innerHTML =
+              '<option value="all">Tất cả</option>' +
+              departments.map(function (dep) {
+                return '<option value="' + escapeHtml(dep) + '">' + escapeHtml(dep) + '</option>';
+              }).join('');
+            if (selected !== 'all' && departments.indexOf(selected) !== -1) {
+              departmentSelect.value = selected;
+            }
+          }
+
+          function updateView() {
+            if (!searchInput || !departmentSelect) return;
+            var keyword = searchInput.value.trim().toLowerCase();
+            var selectedDepartment = departmentSelect.value;
+            filteredCache = employeeIndex.filter(function (item) {
+              var matchDepartment = selectedDepartment === 'all' || String(item.boPhan || '').trim() === selectedDepartment;
+              var matchSearch = !keyword || item.searchText.indexOf(keyword) !== -1;
+              return matchDepartment && matchSearch;
+            });
+            var result = paginateData(filteredCache, currentPage, pageSize);
+            currentPage = result.page;
+            if (tableBody) tableBody.classList.add('filtering');
+            window.requestAnimationFrame(function () {
+              renderRows(result.pageData, keyword);
+              if (tableBody) tableBody.classList.remove('filtering');
+            });
+            renderPagination(result.totalPages);
+            if (meta) {
+              meta.textContent = result.total + '/' + employeeCache.length + ' nhân sự • Trang ' + currentPage + '/' + result.totalPages + ' • ' + pageSize + '/trang';
+            }
+          }
+
+          function renderSkeleton(rows) {
+            rows = typeof rows === 'number' ? rows : 12;
+            if (!tableBody) return;
+            var html = Array.from({ length: rows }).map(function () {
+              return '<tr class="skeleton-row">' +
+                Array.from({ length: 7 }).map(function () {
+                  return '<td><div class="skeleton-cell"></div></td>';
+                }).join('') +
+                '</tr>';
+            }).join('');
+            tableBody.innerHTML = html;
+          }
+
+          function renderEmployees(employees) {
+            employeeCache = Array.isArray(employees) ? employees : [];
+            buildSearchIndex(employeeCache);
+            renderDepartmentFilter(employeeCache);
+            currentPage = 1;
+            updateView();
+          }
+
+          function renderError(error) {
+            if (!tableBody || !meta) return;
+            var message = (error && error.message) ? error.message : 'Không thể tải dữ liệu từ Google Sheets.';
+            tableBody.innerHTML = '<tr><td class="error" colspan="7">' + escapeHtml(message) + '</td></tr>';
+            meta.textContent = 'Lỗi tải dữ liệu';
+          }
+
+          function loadData(showLoading) {
+            if (showLoading) renderSkeleton();
+            google.script.run.withSuccessHandler(renderEmployees).withFailureHandler(renderError).getEmployees();
+          }
+
+          function showDetailView(employee, avatarUrl) {
+            if (!detailView || !listView) return;
+            if (detailAvatar) detailAvatar.src = avatarUrl;
+            if (detailName) detailName.textContent = (employee.ma || '') + ' - ' + (employee.ten || '');
+            if (detailDept) detailDept.textContent = (employee.gioiTinh || '') + ' - ' + (employee.boPhan || '');
+            if (detailInfo) {
+              detailInfo.innerHTML = [
+                ['CCCD', employee.cccd], ['BHXH', employee.bhxh], ['Ngày sinh', employee.ngaySinh],
+                ['SĐT', employee.sdt], ['Email', employee.email], ['Trình độ', employee.trinhDo],
+                ['Địa chỉ', employee.diaChi], ['Hôn nhân', employee.honNhan], ['Trạng thái', employee.trangThai],
+                ['Thông tin thêm', employee.thongTinThem]
+              ].map(function (pair) {
+                return '<div class="info-item"><small>' + escapeHtml(pair[0]) + '</small><strong>' + escapeHtml(pair[1] || '') + '</strong></div>';
+              }).join('');
+            }
+            listView.classList.add('hidden');
+            detailView.classList.remove('hidden');
+            detailView.classList.remove('fade-in');
+            void detailView.offsetWidth;
+            detailView.classList.add('fade-in');
+          }
+
+          function showListView() {
+            if (!detailView || !listView) return;
+            detailView.classList.add('hidden');
+            listView.classList.remove('hidden');
+            listView.classList.remove('fade-in');
+            void listView.offsetWidth;
+            listView.classList.add('fade-in');
+          }
+
+          function handleRowClick(maNV) {
+            var employee = employeeCache.find(function (item) { return item.ma === maNV; });
+            if (!employee) return;
+            google.script.run.withSuccessHandler(function (avatarUrl) {
+              showDetailView(employee, avatarUrl);
+            }).withFailureHandler(function () {
+              showDetailView(employee, 'https://via.placeholder.com/320x320.png?text=No+Avatar');
+            }).getEmployeeAvatar(maNV);
+          }
+
+          function handleTableClick(event) {
+            var row = event.target.closest('tr[data-ma]');
+            if (!row) return;
+            handleRowClick(row.dataset.ma || '');
+          }
+
+          function handlePaginationClick(event) {
+            var button = event.target.closest('button');
+
+            if (!button || !pagination.contains(button)) return;
+
+            var action = button.getAttribute('data-page');
+            if (!action) return;
+
+            var totalPages = Math.max(1, Math.ceil(filteredCache.length / pageSize));
+
+            if (action === 'prev') {
+              if (currentPage > 1) currentPage--;
+            } 
+            else if (action === 'next') {
+              if (currentPage < totalPages) currentPage++;
+            } 
+            else {
+              var pageNum = parseInt(action, 10);
+              if (!isNaN(pageNum)) currentPage = pageNum;
+            }
+
+            updateView();
+          }
+
+          function startClock() {
+            if (!clock) return;
+            function renderClock() {
+              var now = new Date();
+              clock.textContent = 'Cập nhật lúc: ' + now.toLocaleString('vi-VN', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+            renderClock();
+            clockTimerId = window.setInterval(renderClock, 1000);
+          }
+
+          var handleSearch = null;
+          var handleFilter = null;
+
+          function bindEvents() {
+            if (tableBody) tableBody.addEventListener('click', handleTableClick);
+            if (pagination) pagination.addEventListener('click', handlePaginationClick);
+
+            handleSearch = debounce(function () {
+              currentPage = 1;
+              updateView();
+            }, 200);
+
+            handleFilter = function () {
+              currentPage = 1;
+              updateView();
+            };
+
+            if (searchInput) searchInput.addEventListener('input', handleSearch);
+            if (departmentSelect) departmentSelect.addEventListener('change', handleFilter);
+            if (backBtn) backBtn.addEventListener('click', showListView);
+          }
+
+          function init() {
+            if (!queryElements()) return;
+            destroy();
+            bindEvents();
+            currentPage = 1;
+            pageSize = PAGE_SIZE;
+            employeeCache = [];
+            employeeIndex = [];
+            filteredCache = [];
+            loadData(true);
+            startClock();
+            refreshTimerId = window.setInterval(function () { loadData(false); }, REFRESH_MS);
+          }
+
+          function destroy() {
+            if (refreshTimerId) {
+              window.clearInterval(refreshTimerId);
+              refreshTimerId = null;
+            }
+
+            if (clockTimerId) {
+              window.clearInterval(clockTimerId);
+              clockTimerId = null;
+            }
+
+            if (tableBody) {
+              tableBody.removeEventListener('click', handleTableClick);
+            }
+
+            if (pagination) {
+              pagination.removeEventListener('click', handlePaginationClick);
+            }
+
+            if (searchInput && handleSearch) {
+              searchInput.removeEventListener('input', handleSearch);
+              handleSearch = null;
+            }
+
+            if (departmentSelect && handleFilter) {
+              departmentSelect.removeEventListener('change', handleFilter);
+              handleFilter = null;
+            }
+
+            if (backBtn) {
+              backBtn.removeEventListener('click', showListView);
+            }
+          }
+
+          return { init: init, destroy: destroy };
+        })();
+
+        navigate(window.location.hash.slice(1) || 'dashboard', false);
+      })();
+  </script>
+</body>
+
+</html>

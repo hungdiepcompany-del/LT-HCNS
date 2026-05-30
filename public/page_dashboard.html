@@ -1,0 +1,200 @@
+<div class="page-dashboard">
+  <header class="header">
+    <h1 class="header-title">Hành chính - Nhân sự</h1>
+
+    <div class="header-tools">
+      <label class="search" aria-label="Tìm kiếm nhân sự">
+        <button class="dashboard-search-button" id="dashboardSearchButton" type="button" aria-label="Tìm kiếm">🔎</button>
+        <input id="dashboardSearchInput" type="text" placeholder="Tìm mã NV, tên NV, Bộ phận..." />
+      </label>
+      <div class="avatar" id="dashboardUserAvatar" title="Nguoi dung">ND</div>
+    </div>
+  </header>
+
+  <div class="auth-alert hidden" id="dashboardError"></div>
+
+  <section class="kpi-grid" aria-label="KPI tổng quan">
+    <article class="card kpi-card">
+      <div class="kpi-label">Đang làm việc</div>
+      <div class="kpi-number" id="kpiActiveEmployees">0</div>
+      <span class="chip warn chip-detail" id="kpiActiveMeta">Đang tải dữ liệu...</span>
+    </article>
+
+    <article class="card kpi-card">
+      <div class="kpi-label">Nhân sự mới tháng này</div>
+      <div class="kpi-number" id="kpiNewEmployees">0</div>
+      <span class="chip pos" id="kpiNewMeta">Theo ngày bắt đầu</span>
+    </article>
+
+    <article class="card kpi-card">
+      <div class="kpi-label">Sinh nhật tháng này</div>
+      <div class="kpi-number" id="kpiBirthdaysMonth">0</div>
+      <span class="chip neu" id="kpiBirthdayMeta">Nhân viên có sinh nhật trong tháng</span>
+    </article>
+
+    <article class="card kpi-card">
+      <div class="kpi-label">Đã nghỉ việc</div>
+      <div class="kpi-number" id="kpiInactiveEmployees">0</div>
+      <span class="chip neg" id="kpiInactiveMeta">Theo trạng thái trên sheet</span>
+    </article>
+
+    <article class="card kpi-card">
+      <div class="kpi-label">Tai nạn lao động tháng này</div>
+      <div class="kpi-number" id="kpiSafetyIncidents">0</div>
+      <span class="chip warn" id="kpiSafetyMeta">Chưa có dữ liệu thực tế</span>
+    </article>
+  </section>
+
+  <section class="main-grid">
+    <div>
+      <article class="card panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Phân tích nhân sự</h2>
+          <span class="panel-meta" id="dashboardUpdatedAt">Cập nhật: đang tải...</span>
+        </div>
+
+        <div class="charts">
+          <div class="chart-card">
+            <h3 class="chart-title">Nhân sự theo phòng ban</h3>
+            <div class="dept-bars" id="dashboardDepartmentBars"></div>
+            <div class="muted" style="margin-top: 8px" id="dashboardDepartmentMeta">Đang tải cơ cấu phòng ban...</div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Tuyển mới &amp; Nghỉ việc 6 tháng gần nhất</h3>
+            <canvas id="trendChart" class="line-chart" width="420" height="180"></canvas>
+            <div class="muted" style="margin-top: 8px" id="dashboardTrendMeta">Đang tải xu hướng tuyển dụng...</div>
+            <div style="margin-top:8px;text-align:right">
+              <button id="trendDetailBtn" style="background:none;border:none;color:var(--accent-blue);font-size:0.82rem;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px;">
+                Xem chi tiết →
+              </button>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Tai nạn lao động 6 tháng gần nhất</h3>
+            <canvas id="safetyIncidentChart" class="line-chart" width="420" height="180"></canvas>
+            <div class="muted" style="margin-top: 8px" id="dashboardSafetyIncidentMeta">Dữ liệu mock: cột chồng = số vụ theo mức độ, line xanh = tổng ngày nghỉ</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card panel dashboard-trial-panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Nhân sự đang Thử việc</h2>
+          <span class="panel-meta" id="dashboardRecentMeta">Theo ngày bắt đầu từ sheet</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mã NV</th>
+                <th>Họ tên</th>
+                <th>Bộ phận</th>
+                <th>Ngày vào</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardRecentHires">
+              <tr>
+                <td colspan="5" class="muted">Đang tải dữ liệu...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <aside>
+      <article class="card panel dashboard-birthday-panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Sinh nhật tháng này</h2>
+          <span class="panel-meta" id="dashboardBirthdayMeta">Tất cả sinh nhật trong tháng</span>
+        </div>
+
+        <div class="birthday-wheel-wrap">
+          <div class="birthday-wheel-fade birthday-wheel-fade--top"></div>
+          <div class="birthday-wheel" id="dashboardUpcomingBirthdays">
+            <div class="timeline-item">
+              <div class="timeline-date">..</div>
+              <div class="timeline-content">
+                <strong>Đang tải dữ liệu sinh nhật</strong>
+                <div class="muted">Vui lòng chờ trong giây lát</div>
+              </div>
+            </div>
+          </div>
+          <div class="birthday-wheel-fade birthday-wheel-fade--bottom"></div>
+        </div>
+      </article>
+    </aside>
+  </section>
+</div>
+
+<div class="employee-detail-modal-overlay hidden" id="dashboardSearchOverlay" role="dialog" aria-modal="true" aria-label="Kết quả tìm kiếm nhân sự">
+  <div class="employee-detail-modal dashboard-search-modal">
+    <div class="employee-detail-modal-head">
+      <div>
+        <h2 class="employee-detail-modal-title">Kết quả tìm kiếm</h2>
+        <div class="muted" id="dashboardSearchMeta">Nhập mã NV, tên NV hoặc Bộ phận để tìm nhân sự</div>
+      </div>
+      <button id="dashboardSearchClose" class="trend-modal-close" type="button" aria-label="Đóng">✕</button>
+    </div>
+    <div class="dashboard-search-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã NV</th>
+            <th>Họ tên</th>
+            <th>Giới tính</th>
+            <th>Ngày sinh</th>
+            <th>Bộ phận</th>
+            <th>Vị trí</th>
+            <th>Cấp bậc</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardSearchResults">
+          <tr>
+            <td colspan="7" class="muted">Chưa có từ khóa tìm kiếm.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="employee-detail-modal-overlay hidden" id="dashboardEmployeeDetailOverlay" role="dialog" aria-modal="true" aria-label="Chi tiết nhân sự">
+  <div class="employee-detail-modal">
+    <div class="employee-detail-modal-head">
+      <h2 class="employee-detail-modal-title">Chi tiết nhân sự</h2>
+      <button id="dashboardEmployeeDetailClose" class="trend-modal-close" type="button" aria-label="Đóng">✕</button>
+    </div>
+    <div class="dashboard-detail-layout">
+      <div class="dashboard-profile-card">
+        <img id="dashboardDetailAvatar" loading="lazy" class="dashboard-detail-avatar" src="" alt="Ảnh đại diện" />
+        <h3 id="dashboardDetailName"></h3>
+        <p id="dashboardDetailDept"></p>
+      </div>
+      <div class="dashboard-info-grid" id="dashboardDetailInfo"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal chi tiết tuyển dụng theo năm -->
+<div class="trend-modal-overlay hidden" id="trendModalOverlay" role="dialog" aria-modal="true" aria-label="Chi tiết tuyển dụng theo năm">
+  <div class="trend-modal">
+    <div class="trend-modal-head">
+      <h2 class="trend-modal-title">Chi tiết tuyển dụng theo năm</h2>
+      <div class="trend-modal-controls">
+        <select id="trendYearSelect" class="trend-year-select" aria-label="Chọn năm"></select>
+        <button id="trendModalClose" class="trend-modal-close" aria-label="Đóng">✕</button>
+      </div>
+    </div>
+    <div class="trend-modal-legend">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-blue)"></span>Tuyển mới</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#ff6b8a"></span>Nghỉ việc</span>
+    </div>
+    <canvas id="trendModalChart" class="line-chart" style="width:100%;height:auto;display:block;"></canvas>
+    <div class="muted" id="trendModalMeta" style="margin-top:8px;text-align:center">Đang tải...</div>
+  </div>
+</div>

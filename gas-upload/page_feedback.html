@@ -1,0 +1,375 @@
+<div class="page-feedback">
+  <style>
+    .page-feedback {
+      width: min(1380px, 96vw);
+      margin: 0 auto;
+      color: var(--text-primary);
+    }
+
+    .page-feedback .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .page-feedback .header h1,
+    .page-feedback .panel-title {
+      margin: 0;
+    }
+
+    .page-feedback .header p,
+    .page-feedback .muted {
+      margin: 0;
+      color: var(--text-secondary);
+    }
+
+    .page-feedback .hero-note {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      background: rgba(18, 14, 47, 0.72);
+      color: #d8c5ff;
+      font-size: 0.85rem;
+    }
+
+    .page-feedback .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .page-feedback .kpi-card,
+    .page-feedback .panel,
+    .page-feedback .chart-card,
+    .page-feedback .feedback-item {
+      border-radius: var(--radius-lg);
+      border: var(--border-soft);
+      background: linear-gradient(160deg, rgba(17, 27, 67, 0.88), rgba(11, 18, 48, 0.97));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .page-feedback .kpi-card {
+      padding: 18px;
+    }
+
+    .page-feedback .kpi-label {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .page-feedback .kpi-number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .page-feedback .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+    }
+
+    .page-feedback .chip.info {
+      background: rgba(77, 163, 255, 0.14);
+      color: #9ad3ff;
+    }
+
+    .page-feedback .chip.ok {
+      background: rgba(29, 216, 167, 0.14);
+      color: #7af3d5;
+    }
+
+    .page-feedback .chip.warn {
+      background: rgba(255, 204, 102, 0.16);
+      color: #ffd98a;
+    }
+
+    .page-feedback .main-grid {
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .page-feedback .panel {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .page-feedback .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .page-feedback .panel-meta {
+      color: var(--text-secondary);
+      font-size: 0.84rem;
+    }
+
+    .page-feedback .charts {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+    }
+
+    .page-feedback .chart-card {
+      padding: 16px;
+    }
+
+    .page-feedback .chart-title {
+      margin: 0 0 12px;
+      font-size: 0.96rem;
+    }
+
+    .page-feedback .bars,
+    .page-feedback .category-list,
+    .page-feedback .summary-list,
+    .page-feedback .feedback-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .page-feedback .bar-row,
+    .page-feedback .category-row {
+      display: grid;
+      grid-template-columns: 70px 1fr 42px;
+      gap: 10px;
+      align-items: center;
+      font-size: 0.84rem;
+    }
+
+    .page-feedback .track {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(90, 104, 156, 0.25);
+      overflow: hidden;
+    }
+
+    .page-feedback .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #8b5cf6, #4da3ff);
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.28);
+    }
+
+    .page-feedback .category-row .fill {
+      background: linear-gradient(90deg, #20e3ff, #1dd8a7);
+      box-shadow: 0 0 16px rgba(32, 227, 255, 0.22);
+    }
+
+    .page-feedback .feedback-item {
+      padding: 14px 16px;
+    }
+
+    .page-feedback .feedback-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      align-items: flex-start;
+    }
+
+    .page-feedback .feedback-title {
+      font-weight: 700;
+    }
+
+    .page-feedback .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .page-feedback .tag.done {
+      background: rgba(29, 216, 167, 0.16);
+      color: #7af3d5;
+    }
+
+    .page-feedback .tag.open {
+      background: rgba(255, 204, 102, 0.16);
+      color: #ffd98a;
+    }
+
+    .page-feedback .summary-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(14, 22, 55, 0.72);
+      border: 1px solid rgba(114, 145, 255, 0.18);
+    }
+
+    @media (max-width: 1100px) {
+      .page-feedback .kpi-grid,
+      .page-feedback .charts {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .page-feedback .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page-feedback .kpi-grid,
+      .page-feedback .charts {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <header class="header">
+    <div>
+      <h1>Góp ý</h1>
+      <p>Tổng hợp góp ý nội bộ để theo dõi trạng thái xử lý và nhóm vấn đề nổi bật.</p>
+    </div>
+    <div class="hero-note">Hộp thư góp ý tuần này: 8 phản hồi mới</div>
+  </header>
+
+  <section class="kpi-grid">
+    <article class="kpi-card">
+      <div class="kpi-label">Tổng góp ý</div>
+      <div class="kpi-number">86</div>
+      <span class="chip info">▲ +11 trong quý</span>
+    </article>
+    <article class="kpi-card">
+      <div class="kpi-label">Góp ý tháng này</div>
+      <div class="kpi-number">14</div>
+      <span class="chip info">5 phản hồi trong tuần</span>
+    </article>
+    <article class="kpi-card">
+      <div class="kpi-label">Đã xử lý</div>
+      <div class="kpi-number">61</div>
+      <span class="chip ok">71% hoàn tất</span>
+    </article>
+    <article class="kpi-card">
+      <div class="kpi-label">Chưa xử lý</div>
+      <div class="kpi-number">25</div>
+      <span class="chip warn">6 góp ý ưu tiên cao</span>
+    </article>
+  </section>
+
+  <section class="main-grid">
+    <div>
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Xu hướng góp ý</h2>
+          <span class="panel-meta">6 tháng gần nhất</span>
+        </div>
+
+        <div class="charts">
+          <div class="chart-card">
+            <h3 class="chart-title">Góp ý theo tháng</h3>
+            <div class="bars">
+              <div class="bar-row"><span>T11</span><div class="track"><div class="fill" style="width: 36%"></div></div><strong>7</strong></div>
+              <div class="bar-row"><span>T12</span><div class="track"><div class="fill" style="width: 48%"></div></div><strong>9</strong></div>
+              <div class="bar-row"><span>T01</span><div class="track"><div class="fill" style="width: 62%"></div></div><strong>12</strong></div>
+              <div class="bar-row"><span>T02</span><div class="track"><div class="fill" style="width: 56%"></div></div><strong>11</strong></div>
+              <div class="bar-row"><span>T03</span><div class="track"><div class="fill" style="width: 70%"></div></div><strong>13</strong></div>
+              <div class="bar-row"><span>T04</span><div class="track"><div class="fill" style="width: 76%"></div></div><strong>14</strong></div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Phân loại góp ý</h3>
+            <div class="category-list">
+              <div class="category-row"><span>Môi trường</span><div class="track"><div class="fill" style="width: 44%"></div></div><strong>11</strong></div>
+              <div class="category-row"><span>Lương</span><div class="track"><div class="fill" style="width: 36%"></div></div><strong>9</strong></div>
+              <div class="category-row"><span>Quản lý</span><div class="track"><div class="fill" style="width: 52%"></div></div><strong>13</strong></div>
+              <div class="category-row"><span>Thiết bị</span><div class="track"><div class="fill" style="width: 28%"></div></div><strong>7</strong></div>
+            </div>
+            <p class="muted" style="margin-top:12px;">Nhóm góp ý về quản lý và môi trường đang xuất hiện nhiều nhất trong dữ liệu được cập nhật.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Góp ý gần nhất</h2>
+          <span class="panel-meta">5 mục gần đây</span>
+        </div>
+
+        <div class="feedback-list">
+          <div class="feedback-item">
+            <div class="feedback-head">
+              <div class="feedback-title">Đề xuất bổ sung máy lạnh khu vực đóng gói</div>
+              <span class="tag open">Mở</span>
+            </div>
+            <div class="muted">Môi trường • 14/04/2026 • Ca chiều phản ánh nhiệt độ cao sau 14h.</div>
+          </div>
+          <div class="feedback-item">
+            <div class="feedback-head">
+              <div class="feedback-title">Điều chỉnh lịch họp đầu tuần ngắn gọn hơn</div>
+              <span class="tag done">Đã xử lý</span>
+            </div>
+            <div class="muted">Quản lý • 12/04/2026 • Đã cập nhật slot 20 phút từ tuần sau.</div>
+          </div>
+          <div class="feedback-item">
+            <div class="feedback-head">
+              <div class="feedback-title">Bổ sung thêm tủ đồ cá nhân cho line B</div>
+              <span class="tag open">Mở</span>
+            </div>
+            <div class="muted">Thiết bị • 09/04/2026 • Hiện thiếu 6 ngăn trong ca tối.</div>
+          </div>
+          <div class="feedback-item">
+            <div class="feedback-head">
+              <div class="feedback-title">Rà soát lại phụ cấp ca đêm</div>
+              <span class="tag open">Mở</span>
+            </div>
+            <div class="muted">Lương • 06/04/2026 • Đề xuất đối chiếu với quy chế quý II.</div>
+          </div>
+          <div class="feedback-item">
+            <div class="feedback-head">
+              <div class="feedback-title">Bố trí thêm cây nước ở khu hành lang phía Tây</div>
+              <span class="tag done">Đã xử lý</span>
+            </div>
+            <div class="muted">Môi trường • 02/04/2026 • Đã lắp thêm 1 điểm cấp nước.</div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <aside>
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Trạng thái xử lý</h2>
+          <span class="panel-meta">Theo phòng ban</span>
+        </div>
+        <div class="summary-list">
+          <div class="summary-item"><span>Hành chính</span><strong>12 / 15</strong></div>
+          <div class="summary-item"><span>Sản xuất</span><strong>18 / 27</strong></div>
+          <div class="summary-item"><span>Kỹ thuật</span><strong>9 / 11</strong></div>
+          <div class="summary-item"><span>Kinh doanh</span><strong>7 / 9</strong></div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Ưu tiên tuần này</h2>
+          <span class="panel-meta">Demo backlog</span>
+        </div>
+        <div class="summary-list">
+          <div class="summary-item"><span>Không gian nghỉ giữa ca</span><strong>Cao</strong></div>
+          <div class="summary-item"><span>Phản hồi phụ cấp ca đêm</span><strong>Cao</strong></div>
+          <div class="summary-item"><span>Thiết bị line B</span><strong>Trung bình</strong></div>
+        </div>
+      </article>
+    </aside>
+  </section>
+</div>

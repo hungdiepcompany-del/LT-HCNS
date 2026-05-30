@@ -1,0 +1,49 @@
+<div class="auth-card card">
+  <div class="auth-eyebrow">Đăng nhập nội bộ</div>
+  <h1 class="auth-title">Truy cập hệ thống nhân sự</h1>
+  <p class="auth-subtitle">Nhập email công ty, mã bí mật và captcha để nhận OTP. OTP có hiệu lực 3 phút, phiên đăng nhập kéo dài 8 giờ.</p>
+
+  <div class="auth-alert hidden" id="authConfigNote"></div>
+
+  <div class="auth-grid auth-progressive">
+    <div class="auth-field auth-step" data-auth-step="email">
+      <label for="authEmail">Email</label>
+      <input id="authEmail" type="email" inputmode="email" autocomplete="username" placeholder="ten@congty.com" />
+    </div>
+
+    <div class="auth-field auth-step is-collapsed" data-auth-step="secret">
+      <label for="authSecret">Mã bí mật</label>
+      <input id="authSecret" type="password" autocomplete="current-password" placeholder="Nhập mã bí mật đã cấu hình" />
+    </div>
+
+    <div class="auth-field auth-step is-collapsed" data-auth-step="captcha">
+      <label>Captcha</label>
+      <div class="auth-inline">
+        <div class="captcha-box" id="captchaPrompt">Đang tải captcha...</div>
+        <button class="auth-btn secondary" id="refreshCaptchaBtn" type="button">Tải lại</button>
+      </div>
+    </div>
+
+    <div class="auth-field auth-step is-collapsed" data-auth-step="captcha-answer">
+      <label for="captchaAnswer">Kết quả captcha</label>
+      <input id="captchaAnswer" type="text" inputmode="numeric" placeholder="Nhập kết quả captcha" />
+    </div>
+
+    <div class="auth-field auth-step is-collapsed" data-auth-step="otp">
+      <label for="authOtp">Mã OTP</label>
+      <input id="authOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Nhập 6 số OTP từ email" />
+    </div>
+  </div>
+
+  <div class="auth-meta">
+    <div>OTP sẽ được gửi về đúng email bạn vừa nhập.</div>
+    <div class="countdown-pill hidden" id="otpCountdown">OTP còn hiệu lực: 03:00</div>
+  </div>
+
+  <div class="auth-actions is-collapsed" id="authActions">
+    <button class="auth-btn primary hidden" id="sendOtpBtn" type="button">Gửi mã OTP</button>
+    <button class="auth-btn primary hidden" id="loginBtn" type="button">Đăng nhập</button>
+  </div>
+
+  <div class="auth-message" id="authMessage" aria-live="polite"></div>
+</div>

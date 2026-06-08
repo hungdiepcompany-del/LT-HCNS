@@ -227,4 +227,7 @@ out/
 .DS_Store
 Thumbs.db
 *.log
+# LT-HCNS GAS pull local backups/logs
+_gas_backups/
+_gas_pull_logs/
 # END LT-HCNS SAFE IGNORE BLOCK

@@ -1,17 +1,8 @@
 @echo off
-cd /d D:\HanhChinh-NhanSu
+setlocal EnableExtensions
 
-echo =========================
-echo Build version...
-echo =========================
+echo [DEPRECATED WRAPPER] deploy.bat delegates to deploy-all.bat.
+echo [INFO] Official deploy command: deploy-all.bat
 
-node inject-version.js
-
-echo =========================
-echo Deploy Firebase...
-echo =========================
-
-firebase deploy --only hosting
-
-echo DONE
-pause
+call "%~dp0deploy-all.bat" %*
+exit /b %ERRORLEVEL%

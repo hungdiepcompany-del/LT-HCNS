@@ -477,7 +477,11 @@ function Update-BuildVersion {
 }
 
 function Sync-GasWorkspace {
-    param([string]$GasRoot)
+    param(
+        [string]$GasRoot,
+        [bool]$CopyRootGs,
+        [bool]$CopyPublicHtml
+    )
 
     if (-not (Test-Path $GasRoot)) {
         New-Item -ItemType Directory -Path $GasRoot | Out-Null
@@ -504,23 +508,38 @@ function Sync-GasWorkspace {
         'sidebar.html'
     )
 
-    foreach ($name in $rootGsFiles) {
-        $source = Join-Path $repoRoot $name
-        $destination = Join-Path $GasRoot $name
-        if (-not (Test-Path $source)) {
-            Fail "Missing source file: $source"
+    if ($CopyRootGs) {
+        foreach ($name in $rootGsFiles) {
+            $source = Join-Path $repoRoot $name
+            $destination = Join-Path $GasRoot $name
+            if (-not (Test-Path $source)) {
+                Fail "Missing source file: $source"
+            }
+            Copy-Item -LiteralPath $source -Destination $destination -Force
         }
-        Copy-Item -LiteralPath $source -Destination $destination -Force
     }
 
-    foreach ($name in $publicHtmlFiles) {
-        $source = Join-Path $repoRoot ('public\' + $name)
-        $destination = Join-Path $GasRoot $name
-        if (-not (Test-Path $source)) {
-            Fail "Missing source file: $source"
+    if ($CopyPublicHtml) {
+        foreach ($name in $publicHtmlFiles) {
+            $source = Join-Path $repoRoot ('public\' + $name)
+            $destination = Join-Path $GasRoot $name
+            if (-not (Test-Path $source)) {
+                Fail "Missing source file: $source"
+            }
+            Copy-Item -LiteralPath $source -Destination $destination -Force
         }
-        Copy-Item -LiteralPath $source -Destination $destination -Force
     }
+}
+
+function Sync-GasManifest {
+    param([string]$GasRoot)
+
+    $source = Join-Path $repoRoot 'appsscript.json'
+    $destination = Join-Path $GasRoot 'appsscript.json'
+    if (-not (Test-Path $source)) {
+        Fail "Missing source file: $source"
+    }
+    Copy-Item -LiteralPath $source -Destination $destination -Force
 }
 
 function Ensure-GasManifestPath {
@@ -612,6 +631,38 @@ function Write-ClaspProjectFile {
     Write-Info "Wrote $Path"
 }
 
+function Assert-DeployDirectories {
+    param([string]$GasRoot)
+
+    $resolvedRepoRoot = [System.IO.Path]::GetFullPath($repoRoot).TrimEnd('\', '/')
+    $resolvedGasRoot = [System.IO.Path]::GetFullPath($GasRoot).TrimEnd('\', '/')
+    $expectedGasRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot 'gas-upload')).TrimEnd('\', '/')
+    if (-not [string]::Equals($resolvedGasRoot, $expectedGasRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Fail "Unsafe GAS deploy directory: $resolvedGasRoot. Expected exactly: $expectedGasRoot"
+    }
+
+    $firebaseConfigPath = Join-Path $repoRoot 'firebase.json'
+    if (-not (Test-Path -LiteralPath $firebaseConfigPath)) {
+        Fail "Missing Firebase config: $firebaseConfigPath"
+    }
+
+    $firebaseJson = Get-Content -LiteralPath $firebaseConfigPath -Raw | ConvertFrom-Json
+    $hostingPublic = [string]$firebaseJson.hosting.public
+    if ($hostingPublic -ne 'public') {
+        Fail "Unsafe Firebase Hosting public directory in firebase.json: '$hostingPublic'. Expected exactly: 'public'."
+    }
+
+    $resolvedFirebasePublic = [System.IO.Path]::GetFullPath((Join-Path $resolvedRepoRoot $hostingPublic)).TrimEnd('\', '/')
+    $expectedFirebasePublic = [System.IO.Path]::GetFullPath((Join-Path $resolvedRepoRoot 'public')).TrimEnd('\', '/')
+    if (-not [string]::Equals($resolvedFirebasePublic, $expectedFirebasePublic, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Fail "Unsafe Firebase Hosting public directory: $resolvedFirebasePublic. Expected exactly: $expectedFirebasePublic"
+    }
+
+    Write-Info "Root project directory: $resolvedRepoRoot"
+    Write-Info "GAS deploy workspace: $resolvedGasRoot"
+    Write-Info "Firebase Hosting public directory: $resolvedFirebasePublic"
+}
+
 function Extract-DeploymentId {
     param([string]$Text)
 
@@ -655,6 +706,7 @@ function Deploy-Gas {
     Push-Location $GasRoot
     try {
         Write-Section 'Pushing GAS project with clasp'
+        Write-Info "clasp working directory: $((Get-Location).Path)"
         $pushResult = Invoke-ClaspCommand -ClaspExe $ClaspExe -ClaspUser $ClaspUser -Arguments @('push', '--force')
         if ($pushResult.ExitCode -ne 0) {
             Fail 'clasp push failed.'
@@ -687,7 +739,10 @@ function Deploy-FirebaseHosting {
     )
 
     Write-Section 'Deploying Firebase Hosting'
-    $arguments = @('deploy', '--only', 'hosting', '--project', $ProjectId, '--config', (Join-Path $repoRoot 'firebase.json'))
+    $firebaseConfigPath = Join-Path $repoRoot 'firebase.json'
+    Write-Info "Firebase config file: $firebaseConfigPath"
+    Write-Info "Firebase Hosting public directory: $(Join-Path $repoRoot 'public')"
+    $arguments = @('deploy', '--only', 'hosting', '--project', $ProjectId, '--config', $firebaseConfigPath)
     if (-not [string]::IsNullOrWhiteSpace($AccountEmail)) {
         $arguments += @('--account', $AccountEmail)
     }
@@ -742,6 +797,9 @@ try {
     if ([string]::IsNullOrWhiteSpace($gasWebAppUrl)) {
         $gasWebAppUrl = Get-WebAppUrlFromDeploymentId -DeploymentId $gasDeploymentId
     }
+
+    Write-Section 'Validating deploy directories'
+    Assert-DeployDirectories -GasRoot $gasRoot
 
     Write-Section 'Checking local toolchain'
     Ensure-CommandAvailable -CommandName 'node' -NpmPackage 'node' -AutoInstall:$false
@@ -801,9 +859,13 @@ try {
 
     if ($gasDeploy) {
         if ([bool]$syncConfig.CopyRootGsToGas -or [bool]$syncConfig.CopyPublicHtmlToGas) {
-            Sync-GasWorkspace -GasRoot $gasRoot
+            Sync-GasWorkspace `
+                -GasRoot $gasRoot `
+                -CopyRootGs ([bool]$syncConfig.CopyRootGsToGas) `
+                -CopyPublicHtml ([bool]$syncConfig.CopyPublicHtmlToGas)
         }
 
+        Sync-GasManifest -GasRoot $gasRoot
         $gasManifestPath = Ensure-GasManifestPath -GasRoot $gasRoot
         Update-GasManifest -ManifestPath $gasManifestPath -TimeZone $gasTimeZone -ExecuteAs $gasExecuteAs -Access $gasAccess
         Write-ClaspProjectFile -Path (Join-Path $gasRoot '.clasp.json') -ScriptId $gasScriptId

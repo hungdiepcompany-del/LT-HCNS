@@ -1,6 +1,6 @@
 # AI Project Knowledge - HanhChinh-NhanSu
 
-Last updated: 2026-05-30 11:36 +07:00
+Last updated: 2026-06-01
 
 ## Mục đích tài liệu
 
@@ -21,19 +21,24 @@ Project là một ứng dụng quản lý Hành chính - Nhân sự chạy hai b
 - `.firebase/`: cache deploy Firebase Hosting.
 - `docs/`: tài liệu vận hành, deploy, auth, knowledge và work log.
 - `public/`: frontend Firebase Hosting.
-- `gas-upload/`: bundle đưa lên Apps Script bằng `clasp`.
-- Root `.gs`/`.html`: nguồn GAS/HTML lịch sử. Luồng deploy hiện tại copy root GAS và `public` vào `gas-upload` theo cấu hình.
+- `gas-upload/`: workspace deploy sinh ra để đưa lên Apps Script bằng `clasp`. Không sửa thủ công.
+- Root `.gs`: source backend GAS chính thức.
+- Root `appsscript.json`: source manifest GAS chính thức.
+- Root `.html`/`.js` cũ: phần lớn là legacy; xem `docs/PROJECT_FILE_AUDIT.md`.
 
 ## File cấu hình quan trọng
 
 - `firebase.json`: Firebase Hosting public folder là `public`, rewrite mọi route về `/index.html`.
-- `.firebaserc`: project Firebase default là `hanhchinh-nhansu`.
-- `.clasp.json`: root hiện trỏ script cũ; khi thao tác GAS chính nên dùng `gas-upload/.clasp.json` hoặc deploy script.
+- `.firebaserc`: project Firebase default là `hcns-lt`.
+- Root `.clasp.json` legacy đã bị xóa để tránh vô tình `clasp push` từ root.
 - `gas-upload/.clasp.json`: script GAS chính theo `deploy.config.psd1`.
 - `appsscript.json` và `gas-upload/appsscript.json`: manifest Apps Script, web app chạy `USER_DEPLOYING`, access `ANYONE_ANONYMOUS`, có Drive advanced service và các OAuth scopes cần cho MailApp/UrlFetch/Drive/Sheets.
 - `deploy.config.psd1`: nguồn cấu hình deploy chính, gồm Firebase project id, GAS script id, deployment id, web app URL, account dự kiến. Hiện dùng `ClaspUserName = 'default'` vì profile `gas-hr` chưa login, còn default đang là `hr@longthaisteel.com`.
 - `deploy-all.ps1`: deploy automation chính cho Firebase + GAS. Script đã xử lý fallback khi `$PSScriptRoot` rỗng bằng `$PSCommandPath`.
-- `deploy-all.bat`, `deploy.bat`: wrapper deploy.
+- `deploy-all.bat`: lệnh deploy chính thức; gọi `deploy-all.ps1` và truyền config `deploy.config.psd1`.
+- `deploy.bat`: wrapper deprecated để tương thích thao tác cũ; chỉ chuyển tiếp sang `deploy-all.bat`, không còn logic deploy riêng.
+- `docs/PROJECT_FILE_AUDIT.md`: audit source-of-truth, deploy-generated, legacy và file nghi ngờ dư.
+- `docs/DEPLOY_ARCHITECTURE.md`: luồng deploy chuẩn và flow không được dùng.
 
 ## Frontend
 
@@ -142,8 +147,23 @@ Có hai lớp auth:
    - Nếu `currentUser.email` là owner `hr@longthaisteel.com`, frontend lấy Firebase ID token và gọi `loginWithFirebase`.
    - GAS xác thực ID token qua Google Identity Toolkit `accounts:lookup` bằng `AUTH_FIREBASE_API_KEY` nếu có, hoặc API key mặc định trong `AUTH_CONFIG.FIREBASE_API_KEY_DEFAULT`.
    - GAS chỉ cấp session nếu token hợp lệ, email verified, provider là Google và email nằm trong whitelist auto-login.
+   - Chỉ sau khi kiểm tra session GAS và Firebase owner đều không thành công, frontend mới tải partial `login.html` và hiển thị OTP form.
+   - Frontend đặt Firebase persistence là `LOCAL` để session Firebase được giữ qua đóng/mở browser.
+   - Logout xóa GAS session và gọi `firebase.auth().signOut()` để owner không bị tự đăng nhập lại ngay sau logout.
+   - `bindFirebaseAuthListener_()` giữ listener `onAuthStateChanged` lâu dài sau khi Firebase Auth sẵn sàng. Listener không chỉ dùng một lần lúc page load.
+   - `handleAuthenticatedUser_()` là điểm xử lý tập trung: kiểm tra owner email, lấy Firebase ID token, gọi GAS `loginWithFirebase`, lưu GAS session và hiện Dashboard.
+   - Sau GIS `signInWithCredential()`, frontend gọi ngay `handleAuthenticatedUser_(result.user)`; không chờ F5.
+   - GIS prompt chỉ mới `displayed` không được coi là thất bại. Credential đến muộn sau trạng thái prompt/timeout vẫn được xử lý.
 
 Không được dựa vào email trong localStorage để cấp quyền. LocalStorage chỉ lưu session token do GAS cấp.
+
+### Quy tắc bắt buộc cho owner
+
+- `hr@longthaisteel.com` là owner/chủ quản của GAS + Firebase.
+- Khi browser đã có Firebase Auth session hợp lệ của owner, mở Firebase Hosting phải đi thẳng dashboard, không hiện login form, không OTP, không nhập thêm thông tin.
+- Trong thời gian Firebase đang restore session, UI chỉ hiện splash/loading nhẹ. Không được render OTP form rồi mới ẩn.
+- Tài khoản khác hoặc browser chưa có Firebase Auth session hợp lệ vẫn đi qua login OTP hiện tại.
+- Trạng thái chỉ đăng nhập Gmail trong Chrome không tự động đồng nghĩa website có Firebase Auth session. Website không được đọc im lặng tài khoản Google của browser bằng localStorage, cookie hoặc biến client tự đặt.
 
 ## Script Properties cần có
 
@@ -163,14 +183,17 @@ Firebase auto-login:
 
 ## Firebase
 
-Firebase project: `hanhchinh-nhansu`.
+Firebase project hiện hành: `hcns-lt`.
 
-Firebase Web App đã tạo ngày 2026-05-30:
+Firebase Web App hiện hành:
 
 - App display name: `HanhChinh-NhanSu Web`
-- App id: `1:95778640168:web:d38de988d76fc09fb4401d`
-- Auth domain: `hanhchinh-nhansu.firebaseapp.com`
+- App id: `1:904438352439:web:fe377de7a75a819f304db2`
+- Auth domain: `hcns-lt.firebaseapp.com`
+- Project id: `hcns-lt`
 - API key đang được nhúng trong frontend như Firebase Web config công khai.
+- Public Auth config đã có authorized domains `localhost`, `hcns-lt.firebaseapp.com`, `hcns-lt.web.app`.
+- Google provider của project mới đã được cấu hình. Frontend nhúng OAuth client id GIS mới `904438352439-m8706ivb3np83jgj5n06846lobgrgl8a.apps.googleusercontent.com`.
 
 Lưu ý: Firebase Web API key không phải secret. GAS dùng key này để gọi Identity Toolkit `accounts:lookup`; Script Property chỉ là override vận hành, không phải boundary bảo mật.
 
@@ -194,25 +217,29 @@ Không được tắt `requireAuthenticatedSession_()` để sửa UI hoặc aut
 
 Deploy chuẩn:
 
-1. Sửa `public/`, root GAS, docs.
-2. Đồng bộ `public/*` sang `gas-upload/*` nếu không dùng deploy script.
-3. Chạy kiểm tra syntax.
-4. Chạy `deploy-all.ps1` để:
+1. Sửa `public/`, root GAS, root `appsscript.json`, docs.
+2. Chạy kiểm tra syntax.
+3. Chạy `deploy-all.bat --no-pause`.
+4. Wrapper gọi `deploy-all.ps1`; PowerShell đọc `deploy.config.psd1` và guard:
+   - GAS deploy workspace phải đúng `gas-upload/`;
+   - Firebase `hosting.public` phải đúng `public`;
+   - root project chỉ chứa source/config/script, không phải thư mục `clasp push`.
+5. `deploy-all.ps1` thực hiện:
    - kiểm tra Node/Firebase/clasp;
    - cập nhật `.firebaserc`;
-   - cập nhật `.clasp.json`/manifest;
+   - cập nhật `gas-upload/.clasp.json`/manifest;
    - copy root GAS sang `gas-upload`;
    - copy `public` sang `gas-upload`;
    - cập nhật Web App URL/build version;
-   - deploy GAS bằng clasp;
-   - deploy Firebase Hosting.
+   - chạy clasp trong `gas-upload`;
+   - deploy Firebase Hosting theo `firebase.json`, với `hosting.public = "public"`.
 
 Trong môi trường hiện tại:
 
 - `firebase` và `clasp` có trong PATH.
-- `git` không có trong PATH.
-- `clasp deployments --json` tại root bị quyền/tài khoản hoặc project mismatch; cần dùng deploy script hoặc `-P gas-upload`.
-- `clasp -P gas-upload push`, `clasp -P gas-upload deploy -i <deployment-id>` và `firebase deploy --only hosting --project hanhchinh-nhansu` đã chạy được.
+- `git` có trong PATH tại môi trường hiện tại.
+- Không chạy clasp tại root; root `.clasp.json` legacy đã bị xóa.
+- GAS vẫn deploy riêng từ `gas-upload/`. Firebase Hosting phải deploy riêng từ root bằng `firebase deploy --only hosting --project hcns-lt`.
 - `clasp -P gas-upload run ...` hiện trả `Script function not found. Please make sure script is deployed as API executable.` nên không dùng làm đường kiểm thử chính.
 
 ## Trạng thái xác thực/deploy ngày 2026-05-30
@@ -224,12 +251,50 @@ Trong môi trường hiện tại:
 - Root cause còn lại: owner/deployer `hr@longthaisteel.com` cần re-authorize OAuth scopes mới của Apps Script sau khi thêm UrlFetch. Anonymous web app call không thể tự bật consent này.
 - Sau khi owner authorize scope mới, invalid-token test phải chuyển từ `FIREBASE_LOGIN_FAILED` do thiếu quyền UrlFetch sang `FIREBASE_TOKEN_INVALID`; lúc đó mới kiểm thử được owner auto-login bằng Firebase Auth session thật.
 
+## RCA auto-login owner ngày 2026-06-01
+
+- GAS verifier đã được owner cấp scope mới. Live `loginWithFirebase` với token giả hiện trả `FIREBASE_TOKEN_INVALID`, đúng kỳ vọng.
+- Frontend bootstrap không bị login page chặn: splash render trước; `showLoginFlow_()` chỉ chạy sau `validateStoredSession_()` và `tryFirebaseAutoLogin_()` thất bại.
+- Router không ghi đè auth: `AppShell.start()` chỉ chạy sau `showApp_()`.
+- Không có `sessionStorage` auth flow. LocalStorage chỉ giữ GAS session token/user/pending OTP; không dùng email localStorage để cấp quyền.
+- Firebase SDK Web mặc định persistence local; code hiện đặt `firebase.auth.Auth.Persistence.LOCAL` rõ ràng.
+- Ban đầu Public Identity Toolkit API và Admin Auth Config API đều trả `CONFIGURATION_NOT_FOUND`: Firebase Authentication chưa được khởi tạo cho project `hanhchinh-nhansu`.
+- Ngày 2026-06-01 đã hoàn tất Firebase Console Authentication **Get started**. Public Auth config hiện trả `200` và có authorized domains `localhost`, `hanhchinh-nhansu.firebaseapp.com`, `hanhchinh-nhansu.web.app`.
+- Google provider đã được Save: Admin API `defaultSupportedIdpConfigs/google.com` trả `enabled: true`; public `accounts:createAuthUri` trả `providerId=google.com` và OAuth URL hợp lệ.
+- Root cause code còn lại: source cũ chỉ restore Firebase session có sẵn; chưa có Google Sign-In/One Tap để tạo session lần đầu từ Google browser session sau consent.
+- Bản deploy `260601_1032` bổ sung GIS `auto_select` với FedCM. GIS credential chỉ được dùng để gọi Firebase `GoogleAuthProvider.credential()` + `signInWithCredential()`, sau đó frontend vẫn gửi Firebase ID token về GAS `loginWithFirebase`.
+- Client chỉ decode email trong GIS credential để bỏ qua tài khoản không phải owner trước khi tạo Firebase persistence. Đây không phải boundary cấp quyền; GAS vẫn xác minh token, `email_verified`, provider Google và whitelist owner.
+- Logout gọi cả GAS logout, Firebase `signOut()` và GIS `disableAutoSelect()` để tránh vòng lặp đăng xuất rồi tự vào lại.
+
+## Migration Firebase sang `hcns-lt` ngày 2026-06-01
+
+- Frontend `public/index.html` và mirror `gas-upload/index.html` đã đổi toàn bộ Firebase Web config sang `hcns-lt`.
+- GAS verifier `gas-upload/code.gs` đã đổi fallback `FIREBASE_API_KEY_DEFAULT` sang API key Web App mới để xác minh token của `hcns-lt`.
+- `.firebaserc` và `deploy.config.psd1` đã đổi project deploy sang `hcns-lt`; Firebase CLI local đã thêm và chọn owner `hr@longthaisteel.com`.
+- Firebase Auth public config của `hcns-lt` trả authorized domains đúng. Public `accounts:createAuthUri` trả `providerId = google.com` và OAuth URL hợp lệ.
+- OAuth client id GIS cũ đã bị gỡ khỏi frontend; client id mới của `hcns-lt` đã được nhúng.
+- GAS đã push/deploy riêng từ `gas-upload/` lên deployment version `60`; protected API không session vẫn trả `AUTH_REQUIRED`, token Firebase giả vẫn trả `FIREBASE_TOKEN_INVALID`.
+- `firebase deploy --only hosting --project hcns-lt` đã PASS từ root; CLI xác nhận Hosting deploy `14 files in public`.
+- Live `https://hcns-lt.web.app` trả `200`, chứa config `hcns-lt`, không chứa project cũ và không có log `origin_mismatch` trong browser smoke sạch.
+- Owner auto-login end-to-end trên Chrome profile thật vẫn chưa được xác nhận vì profile Chrome hiện thiếu Codex Chrome Extension.
+
+## RCA owner chọn Google account nhưng phải F5 ngày 2026-06-01
+
+- Triệu chứng: khi browser prompt hiện ở góc phải, owner chọn `hr@longthaisteel.com` nhưng app vẫn đứng ở login; F5 mới vào Dashboard.
+- Nguyên nhân 1: callback `googleIdentity.prompt()` cũ gọi `finish(false)` ngay cả khi notification chỉ báo `displayed`, làm flow coi prompt đang hiển thị là thất bại.
+- Nguyên nhân 2: callback credential cũ bỏ qua response khi promise đã `settled`; account được chọn sau đó không kích hoạt `signInWithCredential()` và cập nhật UI ngay.
+- Nguyên nhân 3: listener `onAuthStateChanged` dùng để restore session ban đầu là listener một lần rồi unsubscribe, nên không làm fallback cho auth event phát sinh sau khi login form đã render.
+- Bản sửa build `260601_1544`: giữ listener auth lâu dài, gom xử lý owner vào `handleAuthenticatedUser_()`, chống exchange trùng, không settle khi prompt chỉ displayed, và vẫn xử lý credential đến muộn.
+- Build `260601_1544` đã deploy: GAS version `60`, Firebase Hosting release `hcns-lt` complete.
+
 ## Quy tắc khi sửa
 
 - Luôn giữ parity giữa `public/` và `gas-upload/`.
+- Chỉ sửa root `.gs`, root `appsscript.json` và `public/`. `gas-upload/` là output deploy.
+- Chỉ dùng `deploy-all.bat` làm entrypoint deploy chính thức. `deploy.bat` chỉ là wrapper deprecated.
 - Không đổi kiến trúc sang Next.js/Supabase.
 - Không hard-code bypass auth ở client.
 - Không tắt captcha, OTP, session gate hoặc protected API.
 - Khi sửa text tiếng Việt, giữ UTF-8; tránh dùng PowerShell `Set-Content` lên file HTML lớn vì dễ gây mojibake.
 - Với `.gs`, nếu cần syntax check bằng Node thì copy tạm sang `.js` rồi chạy `node --check`.
-- Browser không thể đọc im lặng Google account chỉ vì user đang đăng nhập Google ở trình duyệt. Auto-login im lặng chỉ hoạt động khi app đã có Firebase Auth session hợp lệ.
+- Browser không thể bypass consent Google chỉ vì user đang đăng nhập Google. Firebase session còn hạn luôn được restore trực tiếp; GIS auto-select chỉ tạo session mới không tương tác khi Google/FedCM xác định browser đủ điều kiện.

@@ -9,8 +9,8 @@
 
     Firebase = @{
         DeployHosting    = $true
-        ProjectId        = 'hanhchinh-nhansu'
-        AccountEmail     = 'hungdiepcompany@gmail.com'
+        ProjectId        = 'hcns-lt'
+        AccountEmail     = 'hr@longthaisteel.com'
         Alias            = 'default'
         RewriteFirebaserc = $true
     }

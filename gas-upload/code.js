@@ -40,6 +40,7 @@ const CONFIG = Object.freeze({
     NOTES: 28, // AB (optional)
     STATUS: 29, // AC
   }),
+  HR_SYNC_TOKEN_PROPERTY: 'HR_SYNC_APPS_SCRIPT_TOKEN',
 });
 
 const IMAGE_CACHE_STORE = Object.freeze({
@@ -79,7 +80,7 @@ const AUTH_CONFIG = Object.freeze({
   PROP_LOCK_MINUTES: 'AUTH_LOCK_MINUTES',
   PROP_FIREBASE_API_KEY: 'AUTH_FIREBASE_API_KEY',
   PROP_FIREBASE_AUTO_LOGIN_EMAILS: 'AUTH_FIREBASE_AUTO_LOGIN_EMAILS',
-  FIREBASE_API_KEY_DEFAULT: 'AIzaSyAKJmjHxu1Pyh2uPYVp_BtkmhnLzKvwTow',
+  FIREBASE_API_KEY_DEFAULT: 'AIzaSyCFleye1UcZxYdBujl3pkUJTvnNvacY7mk',
   FIREBASE_AUTO_LOGIN_EMAILS: Object.freeze(['hr@longthaisteel.com']),
   OTP_KEY_PREFIX: 'auth_otp_',
   SESSION_KEY_PREFIX: 'auth_session_',
@@ -176,6 +177,11 @@ function doPost(e) {
     cleanupLegacyImageCacheProperties_(PropertiesService.getScriptProperties());
     const body = parseApiBody_(e);
     const action = normalizeText_(body.action);
+
+    if (action === 'exportMesEmployees') {
+      return createJsonResponse_(exportMesEmployeesForMes_(body));
+    }
+
     const result = dispatchApiAction_(action, body.data);
     return createJsonResponse_(result);
   } catch (error) {
@@ -1114,6 +1120,10 @@ function loginWithFirebase(payload) {
   }
 }
 
+function authorizeFirebaseAutoLogin() {
+  return verifyFirebaseIdToken_('authorization-probe');
+}
+
 function verifyFirebaseIdToken_(idToken) {
   const apiKey = getScriptPropertyValue_(AUTH_CONFIG.PROP_FIREBASE_API_KEY) || AUTH_CONFIG.FIREBASE_API_KEY_DEFAULT;
   if (!apiKey) {
@@ -1741,4 +1751,129 @@ function sanitizeHtmlText_(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function exportMesEmployeesForMes_(body) {
+  const input = isPlainObject_(body) ? body : {};
+  const providedToken = normalizeText_(input.token);
+  const expectedToken = normalizeText_(
+    PropertiesService.getScriptProperties().getProperty(CONFIG.HR_SYNC_TOKEN_PROPERTY)
+  );
+
+  if (!expectedToken) {
+    return {
+      ok: false,
+      error: 'hr_sync_token_not_configured',
+      message: 'Chưa cấu hình HR_SYNC_APPS_SCRIPT_TOKEN trong Script Properties.',
+    };
+  }
+
+  if (!providedToken || providedToken !== expectedToken) {
+    return {
+      ok: false,
+      error: 'unauthorized',
+      message: 'Token đồng bộ HR không hợp lệ.',
+    };
+  }
+
+  const sheetName = normalizeText_(input.sheetName) || CONFIG.SHEET_NAME;
+  if (sheetName !== CONFIG.SHEET_NAME) {
+    return {
+      ok: false,
+      error: 'sheet_not_allowed',
+      message: 'Sheet name không được phép đồng bộ.',
+    };
+  }
+
+  const ss = getHrSpreadsheet_();
+  const sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+  if (!sheet) {
+    return {
+      ok: false,
+      error: 'sheet_not_found',
+      message: 'Không tìm thấy sheet nhân sự.',
+    };
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < CONFIG.FIRST_DATA_ROW) {
+    return {
+      ok: true,
+      source: 'google_apps_script',
+      sheetName: CONFIG.SHEET_NAME,
+      rowCount: 0,
+      rows: [],
+    };
+  }
+
+  const totalRows = lastRow - CONFIG.FIRST_DATA_ROW + 1;
+  const values = sheet
+    .getRange(CONFIG.FIRST_DATA_ROW, 1, totalRows, CONFIG.COLUMNS.STATUS)
+    .getDisplayValues();
+
+  const rows = values
+    .map(function(rowValues, index) {
+      return buildMesEmployeeRowFromHrValues_(rowValues, CONFIG.FIRST_DATA_ROW + index);
+    })
+    .filter(function(row) {
+      return row.employee_code && row.full_name;
+    });
+
+  return {
+    ok: true,
+    source: 'google_apps_script',
+    sheetName: CONFIG.SHEET_NAME,
+    rowCount: rows.length,
+    rows: rows,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+function buildMesEmployeeRowFromHrValues_(rowValues, rowNumber) {
+  const col = CONFIG.COLUMNS;
+
+  const employeeCode = normalizeText_(rowValues[col.CODE - 1]);
+  const fullName = normalizeText_(rowValues[col.NAME - 1]);
+  const department = normalizeText_(rowValues[col.DEPARTMENT - 1]);
+  const startDate = normalizeText_(rowValues[col.START_DATE - 1]);
+  const gender = normalizeText_(rowValues[col.GENDER - 1]);
+  const birthDate = normalizeText_(rowValues[col.BIRTH_DATE - 1]);
+  const email = normalizeText_(rowValues[col.EMAIL - 1]);
+  const phone = normalizeText_(rowValues[col.PHONE - 1]);
+  const contractType = normalizeText_(rowValues[col.CONTRACT_TYPE - 1]);
+  const status = normalizeText_(rowValues[col.STATUS - 1]);
+
+  return {
+    source_row_number: rowNumber,
+    employee_code: employeeCode,
+    full_name: fullName,
+    gender: gender,
+    date_of_birth: birthDate,
+    email: email,
+    phone: phone,
+    department_name_snapshot: department,
+    job_title: '',
+    employment_type: contractType,
+    employment_status: normalizeMesEmploymentStatus_(status),
+    hire_date: startDate,
+    is_active: isMesEmployeeActive_(status),
+    is_production_worker: false,
+  };
+}
+
+function normalizeMesEmploymentStatus_(status) {
+  const value = normalizeText_(status).toLowerCase();
+
+  if (!value) return 'active';
+  if (value.indexOf('nghỉ') !== -1 || value.indexOf('nghi') !== -1) return 'inactive';
+  if (value.indexOf('thôi') !== -1 || value.indexOf('thoi') !== -1) return 'resigned';
+  if (value.indexOf('tạm') !== -1 || value.indexOf('tam') !== -1) return 'on_leave';
+  if (value.indexOf('thử') !== -1 || value.indexOf('thu') !== -1) return 'probation';
+
+  return 'active';
+}
+
+function isMesEmployeeActive_(status) {
+  const normalizedStatus = normalizeMesEmploymentStatus_(status);
+  return normalizedStatus === 'active' || normalizedStatus === 'probation';
 }

@@ -1636,22 +1636,23 @@
 
   <script>
     var API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxCWUHr-33sTja9_mOE1r0-wDEfQ2iHnMiEerja0gujBicQpI82uWRbsMpDMk-b6oNw0g/exec';
-    var APP_BUILD_VERSION = '260530_1357';
+    var APP_BUILD_VERSION = '260601_1544';
 
     window.APP_CONFIG = window.APP_CONFIG || {
       apiBaseUrl: API_BASE_URL,
       partialBaseUrl: '',
       buildVersion: APP_BUILD_VERSION,
       firebaseConfig: {
-        apiKey: 'AIzaSyAKJmjHxu1Pyh2uPYVp_BtkmhnLzKvwTow',
-        authDomain: 'hanhchinh-nhansu.firebaseapp.com',
-        projectId: 'hanhchinh-nhansu',
-        storageBucket: 'hanhchinh-nhansu.firebasestorage.app',
-        messagingSenderId: '95778640168',
-        appId: '1:95778640168:web:d38de988d76fc09fb4401d',
-        measurementId: 'G-11J3D49QZZ'
+        apiKey: 'AIzaSyCFleye1UcZxYdBujl3pkUJTvnNvacY7mk',
+        authDomain: 'hcns-lt.firebaseapp.com',
+        projectId: 'hcns-lt',
+        storageBucket: 'hcns-lt.firebasestorage.app',
+        messagingSenderId: '904438352439',
+        appId: '1:904438352439:web:fe377de7a75a819f304db2',
+        measurementId: 'G-9LGZ7WPRC0'
       },
-      firebaseAutoLoginEmail: 'hr@longthaisteel.com'
+      firebaseAutoLoginEmail: 'hr@longthaisteel.com',
+      firebaseGoogleClientId: '904438352439-m8706ivb3np83jgj5n06846lobgrgl8a.apps.googleusercontent.com'
     };
 
     if (window.google && window.google.script) {
@@ -1799,9 +1800,16 @@
       var captchaWarmupTimerId = null;
       var appsScriptHintsReady = false;
       var firebaseAuthReadyPromise = null;
+      var firebaseAuthListenerBound = false;
+      var firebaseAuthListenerUnsubscribe = null;
+      var ownerSessionExchangePromise = null;
+      var appAuthenticated = false;
+      var isSigningOut = false;
+      var googleIdentityReadyPromise = null;
       var scriptLoadPromises = {};
       var HR_AUTO_LOGIN_EMAIL = String((window.APP_CONFIG && window.APP_CONFIG.firebaseAutoLoginEmail) || 'hr@longthaisteel.com').toLowerCase();
       var FIREBASE_SDK_VERSION = '10.12.5';
+      var GOOGLE_IDENTITY_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 
       function cacheAuthElements_() {
         emailInput = document.getElementById('authEmail');
@@ -1819,7 +1827,7 @@
       }
 
       function renderBootState_(message) {
-        if (!authScreen) return;
+        if (!authScreen || appAuthenticated) return;
         loginViewReadyPromise = null;
         eventsBound = false;
         authScreen.innerHTML = [
@@ -1868,8 +1876,10 @@
       }
 
       function showLoginFlow_() {
+        if (appAuthenticated) return Promise.resolve(true);
         return ensureLoginViewReady_()
           .then(function () {
+            if (appAuthenticated) return true;
             restorePendingOtp_();
             renderActionState_();
             showLogin_();
@@ -2286,12 +2296,14 @@
       }
 
       function showLogin_() {
+        if (appAuthenticated) return;
         if (authScreen) authScreen.classList.remove('hidden');
         if (sidebar) sidebar.classList.add('hidden');
         if (appMain) appMain.classList.add('hidden');
       }
 
       function showApp_(user) {
+        appAuthenticated = true;
         currentUser = user || getStoredUser_();
         if (authScreen) authScreen.classList.add('hidden');
         if (sidebar) sidebar.classList.remove('hidden');
@@ -2302,6 +2314,9 @@
       }
 
       function finalizeSignedOutState_(message, tone) {
+        appAuthenticated = false;
+        isSigningOut = false;
+        ownerSessionExchangePromise = null;
         clearSession_();
         clearPendingOtp_();
         resetLoginFields_();
@@ -2543,13 +2558,45 @@
               return null;
             }
 
-            return window.firebase.auth();
+            var auth = window.firebase.auth();
+            var localPersistence = window.firebase.auth
+              && window.firebase.auth.Auth
+              && window.firebase.auth.Auth.Persistence
+              && window.firebase.auth.Auth.Persistence.LOCAL;
+            if (!localPersistence || !auth || typeof auth.setPersistence !== 'function') {
+              bindFirebaseAuthListener_(auth);
+              return auth;
+            }
+            return auth.setPersistence(localPersistence)
+              .then(function () {
+                bindFirebaseAuthListener_(auth);
+                return auth;
+              })
+              .catch(function () {
+                bindFirebaseAuthListener_(auth);
+                return auth;
+              });
           })
           .catch(function () {
             return null;
           });
 
         return firebaseAuthReadyPromise;
+      }
+
+      function bindFirebaseAuthListener_(auth) {
+        if (firebaseAuthListenerBound || !auth || typeof auth.onAuthStateChanged !== 'function') {
+          return;
+        }
+        firebaseAuthListenerBound = true;
+        firebaseAuthListenerUnsubscribe = auth.onAuthStateChanged(function (user) {
+          if (!user || isSigningOut || appAuthenticated) return;
+          handleAuthenticatedUser_(user).catch(function () {
+            return false;
+          });
+        }, function () {
+          return null;
+        });
       }
 
       function getFirebaseCurrentUser_() {
@@ -2586,34 +2633,159 @@
         return String(email || '').trim().toLowerCase() === HR_AUTO_LOGIN_EMAIL;
       }
 
+      function getFirebaseGoogleClientId_() {
+        return String((window.APP_CONFIG && window.APP_CONFIG.firebaseGoogleClientId) || '').trim();
+      }
+
+      function ensureGoogleIdentityReady_() {
+        if (googleIdentityReadyPromise) return googleIdentityReadyPromise;
+
+        googleIdentityReadyPromise = loadScriptOnce_(GOOGLE_IDENTITY_SCRIPT_URL)
+          .then(function () {
+            return window.google && window.google.accounts && window.google.accounts.id
+              ? window.google.accounts.id
+              : null;
+          })
+          .catch(function () {
+            return null;
+          });
+        return googleIdentityReadyPromise;
+      }
+
+      function decodeGoogleCredentialEmail_(idToken) {
+        try {
+          var encodedPayload = String(idToken || '').split('.')[1] || '';
+          var normalizedPayload = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
+          while (normalizedPayload.length % 4) normalizedPayload += '=';
+          var payload = JSON.parse(window.atob(normalizedPayload));
+          return String(payload && payload.email || '').trim().toLowerCase();
+        } catch (error) {
+          return '';
+        }
+      }
+
+      function handleAuthenticatedUser_(firebaseUser) {
+        var email = firebaseUser && firebaseUser.email ? String(firebaseUser.email).toLowerCase() : '';
+        if (!firebaseUser || !isHrAutoLoginEmail_(email) || typeof firebaseUser.getIdToken !== 'function') {
+          return Promise.resolve(false);
+        }
+        if (appAuthenticated) return Promise.resolve(true);
+        if (ownerSessionExchangePromise) return ownerSessionExchangePromise;
+
+        renderBootState_('Đang xác thực tài khoản Google với hệ thống...');
+        ownerSessionExchangePromise = firebaseUser.getIdToken(false)
+          .then(function (idToken) {
+            if (!idToken) return false;
+            return API.call('loginWithFirebase', {
+              idToken: idToken,
+              device: getDeviceInfo_()
+            }, {
+              maxAttempts: 2,
+              timeoutMs: 12000,
+              retryDelayMs: 500
+            });
+          })
+          .then(function (res) {
+            if (!res || !res.sessionToken) return false;
+            persistSession_(String(res.sessionToken || ''), res.user || { email: email });
+            clearPendingOtp_();
+            showApp_(res.user || { email: email });
+            return true;
+          })
+          .finally(function () {
+            ownerSessionExchangePromise = null;
+          });
+        return ownerSessionExchangePromise;
+      }
+
       function tryFirebaseAutoLogin_() {
         return getFirebaseCurrentUser_()
-          .then(function (firebaseUser) {
-            var email = firebaseUser && firebaseUser.email ? String(firebaseUser.email).toLowerCase() : '';
-            if (!firebaseUser || !isHrAutoLoginEmail_(email) || typeof firebaseUser.getIdToken !== 'function') {
+          .then(handleAuthenticatedUser_)
+          .catch(function () {
+            return false;
+          });
+      }
+
+      function signInFirebaseWithGoogleCredential_(idToken) {
+        if (!isHrAutoLoginEmail_(decodeGoogleCredentialEmail_(idToken))) {
+          return Promise.resolve(false);
+        }
+
+        return ensureFirebaseAuthReady_()
+          .then(function (auth) {
+            if (!auth || !window.firebase || !window.firebase.auth
+              || !window.firebase.auth.GoogleAuthProvider
+              || typeof auth.signInWithCredential !== 'function') {
+              return false;
+            }
+            var credential = window.firebase.auth.GoogleAuthProvider.credential(idToken);
+            return auth.signInWithCredential(credential)
+              .then(function (result) {
+                return handleAuthenticatedUser_(result && result.user ? result.user : auth.currentUser);
+              });
+          })
+          .catch(function () {
+            return false;
+          });
+      }
+
+      function tryGoogleIdentityAutoLogin_() {
+        var clientId = getFirebaseGoogleClientId_();
+        if (!clientId) return Promise.resolve(false);
+
+        return ensureGoogleIdentityReady_()
+          .then(function (googleIdentity) {
+            if (!googleIdentity || typeof googleIdentity.initialize !== 'function'
+              || typeof googleIdentity.prompt !== 'function') {
               return false;
             }
 
-            renderBootState_('Dang xac thuc tai khoan Google voi he thong...');
-            return firebaseUser.getIdToken(false)
-              .then(function (idToken) {
-                if (!idToken) return false;
-                return API.call('loginWithFirebase', {
-                  idToken: idToken,
-                  device: getDeviceInfo_()
-                }, {
-                  maxAttempts: 2,
-                  timeoutMs: 12000,
-                  retryDelayMs: 500
-                });
-              })
-              .then(function (res) {
-                if (!res || !res.sessionToken) return false;
-                persistSession_(String(res.sessionToken || ''), res.user || { email: email });
-                clearPendingOtp_();
-                showApp_(res.user || { email: email });
-                return true;
+            return new Promise(function (resolve) {
+              var settled = false;
+              var credentialReceived = false;
+              var timeoutId = window.setTimeout(function () {
+                finish(false);
+              }, 60000);
+
+              function finish(authenticated) {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timeoutId);
+                if (!authenticated && typeof googleIdentity.cancel === 'function') {
+                  googleIdentity.cancel();
+                }
+                resolve(!!authenticated);
+              }
+
+              googleIdentity.initialize({
+                client_id: clientId,
+                auto_select: true,
+                cancel_on_tap_outside: true,
+                use_fedcm_for_prompt: true,
+                callback: function (response) {
+                  credentialReceived = true;
+                  window.clearTimeout(timeoutId);
+                  var idToken = response && response.credential ? String(response.credential) : '';
+                  if (!idToken) {
+                    finish(false);
+                    return;
+                  }
+                  signInFirebaseWithGoogleCredential_(idToken)
+                    .then(finish)
+                    .catch(function () { finish(false); });
+                }
               });
+
+              googleIdentity.prompt(function (notification) {
+                if (settled || credentialReceived || !notification) return;
+                var notDisplayed = typeof notification.isNotDisplayed === 'function' && notification.isNotDisplayed();
+                var skipped = typeof notification.isSkippedMoment === 'function' && notification.isSkippedMoment();
+                var dismissed = typeof notification.isDismissedMoment === 'function' && notification.isDismissedMoment();
+                if (notDisplayed || skipped || dismissed) {
+                  finish(false);
+                }
+              });
+            });
           })
           .catch(function () {
             return false;
@@ -2638,11 +2810,28 @@
       }
 
       function logout() {
+        isSigningOut = true;
         var token = getSessionToken_();
         var request = token ? API.call('logout') : Promise.resolve({ ok: true });
-        return request
+        if (window.google && window.google.accounts && window.google.accounts.id
+          && typeof window.google.accounts.id.disableAutoSelect === 'function') {
+          window.google.accounts.id.disableAutoSelect();
+        }
+        var firebaseSignOut = ensureFirebaseAuthReady_()
+          .then(function (auth) {
+            return auth && typeof auth.signOut === 'function' ? auth.signOut() : null;
+          })
           .catch(function () {
             return null;
+          });
+        return Promise.all([
+          request.catch(function () { return null; }),
+          firebaseSignOut
+        ])
+          .then(function () {
+            return ensureLoginViewReady_().catch(function () {
+              return null;
+            });
           })
           .then(function () {
             return finalizeSignedOutState_('Bạn đã đăng xuất khỏi hệ thống.', 'success');
@@ -2651,13 +2840,18 @@
 
       function init() {
         primeAppsScriptConnections_();
-        renderBootState_('Dang kiem tra phien dang nhap hien tai...');
+        renderBootState_('Đang kiểm tra phiên đăng nhập hiện tại...');
 
         return validateStoredSession_()
           .then(function (authenticated) {
             if (authenticated) return true;
-            renderBootState_('Dang kiem tra tai khoan Google hien tai...');
+            renderBootState_('Đang kiểm tra tài khoản Google hiện tại...');
             return tryFirebaseAutoLogin_();
+          })
+          .then(function (authenticated) {
+            if (authenticated) return true;
+            renderBootState_('Đang kiểm tra đăng nhập Google tự động...');
+            return tryGoogleIdentityAutoLogin_();
           })
           .then(function (authenticated) {
             if (authenticated) return true;

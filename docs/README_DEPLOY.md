@@ -4,6 +4,18 @@ Project nay khong chi co Firebase Hosting. Giao dien duoc host tren Firebase, co
 
 Neu chi deploy Firebase ma khong deploy GAS, trang web van mo duoc nhung cac chuc nang doc du lieu nhan su se loi.
 
+## Lenh deploy chinh thuc
+
+Chay tai `D:\CODE\HanhChinh-NhanSu`:
+
+```bat
+deploy-all.bat --no-pause
+```
+
+Khong chay `clasp push` tai root project. `deploy-all.bat` se copy source sang `gas-upload/`, chay clasp trong `gas-upload/`, va deploy Firebase Hosting theo `firebase.json` voi `hosting.public = "public"`.
+
+`deploy.bat` chi la wrapper deprecated chuyen tiep sang `deploy-all.bat`, khong con logic deploy rieng.
+
 ## 1. Kien truc hien tai cua repo
 
 - `public/`: bo file frontend Firebase Hosting su dung de public len web
@@ -11,14 +23,13 @@ Neu chi deploy Firebase ma khong deploy GAS, trang web van mo duoc nhung cac chu
 - `code.gs`, `employee.gs`, `employee_birth.gs`, `trigger.gs`: backend Google Apps Script
 - Cac file HTML dung cho Firebase dang nam trong `public/`
 - Cac file HTML dung cho Apps Script can copy rieng vao project GAS
-- Thu muc `gas-upload/` da duoc tao san de copy len GAS
+- Thu muc `gas-upload/` la output deploy GAS, khong sua tay
 
 Luu y quan trong:
 
-- Hien tai repo local khong con bo HTML o thu muc goc nua
-- Tuy nhien, ban van co 2 noi can dong bo khi doi URL API:
-- `public/` trong repo de deploy len Firebase
-- cac file HTML trong project Google Apps Script hoac thu muc `gas-upload/`
+- Root project chua source/config/script, khong phai workspace chay `clasp push`
+- `public/` la source frontend va thu muc deploy Firebase Hosting
+- `gas-upload/` la output do deploy script sinh lai truoc khi `clasp push`
 
 ## 2. Dieu kien can truoc khi deploy
 
@@ -124,15 +135,15 @@ Neu ban bo sot buoc nay, trang Firebase se mo duoc nhung goi API se van tro toi 
 
 ## 6. Link thu muc local voi Firebase project
 
-Repo nay da co san `firebase.json`, nhung chua co `.firebaserc`.
-Dieu do co nghia la thu muc hien tai chua gan voi Firebase project nao.
+Repo hien da co `firebase.json` va `.firebaserc`, dang gan voi Firebase project `hcns-lt`.
+Phan ben duoi chi dung khi can cau hinh lai project tren mot moi truong moi.
 
 ### Cach nhanh nhat
 
 Mo PowerShell tai thu muc project:
 
 ```powershell
-cd D:\HanhChinh-NhanSu
+cd D:\CODE\HanhChinh-NhanSu
 firebase login
 firebase projects:list
 firebase use --add
@@ -150,7 +161,7 @@ Lenh nay se tao file `.firebaserc`.
 Chi dung cach nay neu ban muon tao cau hinh moi. Repo da co `firebase.json`, nen thuong khong can.
 
 ```powershell
-cd D:\HanhChinh-NhanSu
+cd D:\CODE\HanhChinh-NhanSu
 firebase init hosting
 ```
 
@@ -191,7 +202,7 @@ Y nghia:
 Ban co the test local:
 
 ```powershell
-cd D:\HanhChinh-NhanSu
+cd D:\CODE\HanhChinh-NhanSu
 firebase emulators:start --only hosting
 ```
 
@@ -212,8 +223,8 @@ Sau do mo URL local ma CLI hien ra de kiem tra:
 Sau khi da cap nhat URL GAS va link dung project:
 
 ```powershell
-cd D:\HanhChinh-NhanSu
-firebase deploy --only hosting
+cd D:\CODE\HanhChinh-NhanSu
+deploy-all.bat --no-pause
 ```
 
 Sau khi deploy xong, CLI se tra ve URL dang:
@@ -268,11 +279,11 @@ Can cap nhat them:
 ## 12. Lenh deploy day du de tham khao
 
 ```powershell
-cd D:\HanhChinh-NhanSu
+cd D:\CODE\HanhChinh-NhanSu
 firebase login
 firebase use --add
 firebase emulators:start --only hosting
-firebase deploy --only hosting
+deploy-all.bat --no-pause
 ```
 
 ## 13. Tai lieu chinh thuc

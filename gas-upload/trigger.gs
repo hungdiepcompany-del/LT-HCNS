@@ -1,3 +1,0 @@
-function triggerRefreshImages() {
-  rebuildImageCache_();
-}
